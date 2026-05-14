@@ -1,0 +1,8 @@
+{
+  "name": "aaronfc-skills",
+  "skills": [
+    "./work-mode/work-init",
+    "./work-mode/work-prd",
+    "./work-mode/work-done"
+  ]
+}
