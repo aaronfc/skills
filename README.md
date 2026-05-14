@@ -1,4 +1,4 @@
-<img width="600" height="400" alt="title" src="https://github.com/user-attachments/assets/44570377-d1c5-483d-bf72-bf1793356236" />
+<img width="612" height="408" alt="title-2" src="https://github.com/user-attachments/assets/e349a0ff-1b3e-4d32-8fad-4f801a7702c5" />
 
 # skills
 
