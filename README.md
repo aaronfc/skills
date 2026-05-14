@@ -1,3 +1,5 @@
+<img width="600" height="400" alt="title" src="https://github.com/user-attachments/assets/44570377-d1c5-483d-bf72-bf1793356236" />
+
 # skills
 
 My Claude Code workflow as it evolves, published so I can point at it.
