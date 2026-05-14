@@ -1,0 +1,4 @@
+interface:
+  display_name: "Update Vocabulary"
+  short_description: "Capture and refine project terminology after work sessions."
+  default_prompt: "Review the recent session and repo docs, then update the project vocabulary with any useful new terminology."

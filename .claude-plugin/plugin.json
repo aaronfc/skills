@@ -3,6 +3,15 @@
   "skills": [
     "./work-mode/work-init",
     "./work-mode/work-prd",
-    "./work-mode/work-done"
+    "./work-mode/work-done",
+    "./testing/mattpocock/grill-me",
+    "./testing/mattpocock/grill-with-docs",
+    "./testing/mattpocock/handoff",
+    "./testing/mattpocock/prototype",
+    "./testing/mattpocock/setup-matt-pocock-skills",
+    "./testing/mattpocock/tdd",
+    "./testing/mattpocock/to-issues",
+    "./testing/mattpocock/to-prd",
+    "./testing/mattpocock/update-vocabulary"
   ]
 }
