@@ -1,4 +1,5 @@
-<img width="612" height="408" alt="title-2" src="https://github.com/user-attachments/assets/e349a0ff-1b3e-4d32-8fad-4f801a7702c5" />
+<img width="612" height="267" alt="title-2-Photoroom" src="https://github.com/user-attachments/assets/1442050f-72fa-412d-90f3-17faf866f599" />
+
 
 # skills
 
