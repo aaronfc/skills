@@ -1,0 +1,78 @@
+version: 1
+scenarios:
+  - id: basic_ui_pr_screenshots
+    user_message: |
+      /aa:review:screenshot
+
+      I just pushed a PR that restyles the login form. Can you capture the screenshots and add them to the PR body?
+    must_include:
+      - 'Bash: gh '
+      - '1354'
+      - '896'
+      - '390'
+      - '844'
+    must_not_include:
+      - 'Bash: git add .*\.(png|jpe?g|gif|webp)'
+      - 'Bash: git commit.*\.(png|jpe?g|gif|webp)'
+      - 'Bash: git push.*screenshot'
+    rubric:
+      - 'The plan captures four shots per screen: before/after crossed with desktop and mobile viewports.'
+      - 'The plan uses the exact viewport sizes 1354x896 for desktop and 390x844 for mobile.'
+      - 'The plan hosts screenshots on a secret gist rather than committing binaries to the branch.'
+      - 'The plan updates the PR body via the gh CLI with a side-by-side Before | After markdown table per viewport.'
+      - 'The plan names files following the <screen>-<viewport>-<state> convention.'
+
+  - id: animated_behavior_change
+    user_message: |
+      /aa:review:screenshot
+
+      This PR changes the dropdown open/close animation timing. Please attach proof to the PR.
+    must_include:
+      - 'Bash: gh '
+    must_not_include:
+      - 'Bash: git add .*\.(png|jpe?g|gif|webp|mp4)'
+    rubric:
+      - 'The plan recognizes that an animated/behavioural change should be captured as a GIF instead of static PNGs.'
+      - 'The plan still hosts the GIF on a per-PR secret gist and links from the PR body.'
+      - 'The plan does not commit the GIF to the branch or main.'
+
+  - id: links_pinned_to_commit_sha
+    user_message: |
+      /aa:review:screenshot
+
+      The header redesign PR is ready — please add screenshots. I want the image links to keep working even if I force-push later.
+    must_include:
+      - 'Bash: git '
+      - 'Bash: gh '
+    rubric:
+      - 'The plan resolves the current commit SHA and uses raw gist URLs pinned to that SHA so links survive force-pushes.'
+      - 'The plan uploads to a secret gist (not a public one or the repo itself).'
+      - 'The plan writes a side-by-side Before | After table in the PR body, one pair per viewport.'
+
+  - id: multiple_screens_pairing
+    user_message: |
+      /aa:review:screenshot
+
+      This PR touches three screens: the dashboard, the settings page, and the profile modal. Please document all of them visually.
+    must_include:
+      - 'Bash: gh '
+      - '1354'
+      - '390'
+    rubric:
+      - 'The plan captures 4 shots per screen (before/after x desktop/mobile) for each of the three screens.'
+      - 'The plan organizes the PR body with one Before | After table per viewport, grouped per screen.'
+      - 'The filenames follow the <screen>-<viewport>-<state>.<ext> pattern for every shot.'
+
+  - id: updates_pr_body_via_gh
+    user_message: |
+      /aa:review:screenshot
+
+      Screenshots are captured already — just put them into the PR description with the standard layout.
+    must_include:
+      - 'Bash: gh pr '
+    must_not_include:
+      - 'Bash: git commit'
+    rubric:
+      - 'The plan updates the PR body through the gh CLI rather than editing files in the repo.'
+      - 'The PR body contains side-by-side Before | After markdown tables, one per viewport.'
+      - 'Image references point at raw gist URLs, not local paths.'

@@ -1,0 +1,56 @@
+version: 1
+scenarios:
+  - id: basic_pr_draft_checks_template
+    user_message: |
+      /aa:review
+    must_include:
+      - 'Bash: git (status|diff|log).*'
+      - '(Glob|Read): .*PULL_REQUEST_TEMPLATE.*'
+    must_not_include:
+      - 'Bash: rm .*'
+      - 'Bash: git push.*--force.*'
+    rubric:
+      - 'The plan inspects the current branch state (git status/diff/log) before drafting.'
+      - 'The plan checks for a repository PR template under .github/ (and optionally docs/) before deciding on a structure.'
+      - 'The drafted PR body leads with Why (motivation/problem) before What (summary of changes).'
+
+  - id: open_pr_with_gh
+    user_message: |
+      Please open a PR for the current branch.
+    must_include:
+      - 'Bash: git .*'
+      - '(Glob|Read): .*PULL_REQUEST_TEMPLATE.*'
+      - 'Bash: gh pr (create|view|edit).*'
+    rubric:
+      - 'The plan gathers diff/commit context with git before composing the PR body.'
+      - 'The plan uses the gh CLI to actually open the PR rather than only printing text.'
+      - 'The PR body follows the repo template if found, otherwise Why → What → references.'
+
+  - id: branch_name_contains_issue
+    user_message: |
+      Draft a PR description for these changes. My branch is `fix/1234-broken-login`.
+    must_include:
+      - 'Bash: git .*'
+    rubric:
+      - 'The draft includes a `Fixes #1234` (or `Relates to #1234`) reference derived from the branch name.'
+
+  - id: ui_changes_triggers_screenshot
+    user_message: |
+      Describe these changes — I just reworked the settings page styles and a couple of React components in the dashboard.
+    must_include:
+      - 'Bash: git (diff|status|log).*'
+    rubric:
+      - 'The plan recognizes the diff touches the UI and invokes or recommends /aa:review:screenshot.'
+      - 'The plan inspects the actual diff to confirm UI files are affected rather than relying solely on the user message.'
+
+  - id: backend_only_no_screenshot
+    user_message: |
+      Draft a PR for my branch. It only changes a database migration and a backend service — no UI at all.
+    must_include:
+      - 'Bash: git (diff|status|log).*'
+    must_not_include:
+      - 'aa:review:screenshot'
+    rubric:
+      - 'The plan does not invoke /aa:review:screenshot for a backend-only change.'
+      - 'The Why section explains the motivation for the migration/service change.'
+      - 'The What section summarizes the changes so a reviewer can approach the diff effectively.'
