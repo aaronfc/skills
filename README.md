@@ -9,9 +9,14 @@ Right now:
 
 - **`work-mode/`** — a small PRD-driven loop I run on most non-trivial work.
 - **`testing/mattpocock/`** — a vendored slice of [Matt Pocock's skills](https://github.com/mattpocock/skills) I'm trying on while transitioning my workflow toward his.
+- **`testing/review/`** — my own review skills.
 
 Install via [skills.sh](https://www.skills.sh):
 
 ```
 npx skills@latest add aaronfc/skills
 ```
+
+## Evaluations
+
+Some skills ship with an `EVALUATION.yaml`. I'm using these to dogfood [unvibe](https://github.com/aaronfc/unvibe), a framework I built for writing evaluations for skills.
