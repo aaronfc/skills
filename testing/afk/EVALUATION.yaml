@@ -1,0 +1,56 @@
+version: 1
+scenarios:
+  - id: pick_ready_issue_and_work_it
+    user_message: |
+      /aa:afk
+    must_include:
+      - 'Bash: .*gh issue list.*--label ready-for-agent.*--state open'
+    must_not_include:
+      - 'Bash: .*gh issue close'
+    rubric:
+      - 'The plan starts by listing open issues labeled ready-for-agent before picking one.'
+      - 'The plan branches off the default branch before making changes.'
+      - 'The plan uses the /tdd skill (or invokes TDD via Skill) to implement the slice.'
+      - 'The plan uses /aa:review (or invokes the aa:review skill) to draft the PR description.'
+      - 'The plan ends by reporting which issue was picked and the PR link.'
+
+  - id: skip_blocked_issues
+    user_message: |
+      Grab a ready issue and work on it while I'm afk. Note: some of the ready-for-agent
+      issues depend on other unfinished issues — don't pick those. Choose one from the unblocked ones.
+    must_include:
+      - 'Bash: .*gh issue list.*ready-for-agent'
+    rubric:
+      - 'The plan explicitly filters out issues whose dependencies are unfinished.'
+      - 'The plan describes selecting an unblocked issue.'
+
+  - id: prefer_smallest_when_multiple_qualify
+    user_message: |
+      Work autonomously — pick something off the ready-for-agent queue. There are several
+      candidates ready right now.
+    must_include:
+      - 'Bash: .*gh issue list.*ready-for-agent'
+    rubric:
+      - 'When multiple issues qualify, the plan picks the smallest one.'
+      - 'The plan inspects issues (e.g. via gh issue view) to compare scope before choosing.'
+      - 'The plan proceeds end-to-end without pausing for confirmation once an issue is chosen.'
+
+  - id: stop_and_ask_on_ambiguous_issue
+    user_message: |
+      /aa:afk — but heads up, the top ready-for-agent issue's acceptance criteria are
+      pretty vague and could be interpreted multiple ways.
+    must_not_include:
+      - 'Bash: .*git commit'
+      - 'Bash: .*gh pr create'
+    rubric:
+      - 'The plan stops and asks the user for clarification rather than guessing on an ambiguous issue.'
+      - 'The plan does not open a PR or commit code before the ambiguity is resolved.'
+
+  - id: tdd_loop_then_pr
+    user_message: |
+      Grab a ready issue and take it all the way to a PR.
+    rubric:
+      - 'The plan implements the work in vertical slices following a red → green TDD loop.'
+      - 'The plan only opens the PR after acceptance criteria are met.'
+      - 'The PR description is drafted via the aa:review skill and links the issue with "Closes #N".'
+      - 'The plan reports back the issue picked and the PR link at the end.'

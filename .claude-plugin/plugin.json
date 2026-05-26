@@ -6,6 +6,7 @@
     "./work-mode/work-done",
     "./testing/review/review",
     "./testing/review/screenshot",
+    "./testing/afk",
     "./testing/mattpocock/grill-me",
     "./testing/mattpocock/grill-with-docs",
     "./testing/mattpocock/handoff",
