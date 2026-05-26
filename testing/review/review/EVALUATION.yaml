@@ -52,5 +52,4 @@ scenarios:
       - 'aa:review:screenshot'
     rubric:
       - 'The plan does not invoke /aa:review:screenshot for a backend-only change.'
-      - 'The Why section explains the motivation for the migration/service change.'
-      - 'The What section summarizes the changes so a reviewer can approach the diff effectively.'
+      - 'The drafted PR body leads with Why (motivation for the migration/service change) before What (summary of changes).'
