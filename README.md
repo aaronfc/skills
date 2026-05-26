@@ -8,8 +8,8 @@ My Claude Code workflow as it evolves, published so I can point at it.
 Right now:
 
 - **`work-mode/`** — a small PRD-driven loop I run on most non-trivial work.
-- **`testing/mattpocock/`** — a vendored slice of [Matt Pocock's skills](https://github.com/mattpocock/skills) I'm trying on while transitioning my workflow toward his.
-- **`testing/review/`** — my own review skills.
+- **`testing/`** — skills I am testing or experimenting with.
+- **`testing/mattpocock/`** — a vendored slice of [Matt Pocock's skills](https://github.com/mattpocock/skills).
 
 Install via [skills.sh](https://www.skills.sh):
 
