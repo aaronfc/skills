@@ -12,6 +12,7 @@
     "./testing/mattpocock/handoff",
     "./testing/mattpocock/prototype",
     "./testing/mattpocock/setup-matt-pocock-skills",
+    "./testing/mattpocock/teach",
     "./testing/mattpocock/tdd",
     "./testing/mattpocock/to-issues",
     "./testing/mattpocock/to-prd",
