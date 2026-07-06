@@ -36,16 +36,16 @@ scenarios:
       - 'The plan still hosts the GIF on a per-PR secret gist and links from the PR body.'
       - 'The plan does not commit the GIF to the branch or main.'
 
-  - id: links_pinned_to_commit_sha
+  - id: links_survive_force_push
     user_message: |
       /aa:review:screenshot
 
       The header redesign PR is ready — please add screenshots. I want the image links to keep working even if I force-push later.
     must_include:
-      - 'Bash: git '
       - 'Bash: gh '
     rubric:
-      - 'The plan resolves the current commit SHA and uses raw gist URLs pinned to that SHA so links survive force-pushes.'
+      - 'The plan links the raw gist URL, which is independent of the PR repo (so force-pushing the branch cannot break it), and pins it to the gist revision SHA (…/raw/<revisionsha>/…) so the link stays stable even if the gist is later edited.'
+      - 'The plan does NOT rely on committing the image to the repo or on a repo commit SHA for the link (a raw.githubusercontent.com URL would not render in a private-repo PR).'
       - 'The plan uploads to a secret gist (not a public one or the repo itself).'
       - 'The plan writes a side-by-side Before | After table in the PR body, one pair per viewport.'
 
