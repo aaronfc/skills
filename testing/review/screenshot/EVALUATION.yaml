@@ -16,11 +16,24 @@ scenarios:
       - 'Bash: git commit.*\.(png|jpe?g|gif|webp)'
       - 'Bash: git push.*screenshot'
     rubric:
+      - 'The plan captures with Playwright (an isolated/headless browser via the mcp__playwright__* tools), not the Chrome integration, and relies on screenshots being written straight to disk (browser_take_screenshot returns a file path) rather than a download/GIF workaround.'
       - 'The plan captures four shots per screen: before/after crossed with desktop and mobile viewports.'
-      - 'The plan uses the exact viewport sizes 1354x896 for desktop and 390x844 for mobile.'
+      - 'The plan uses the exact viewport sizes 1354x896 for desktop and 390x844 for mobile (via browser_resize).'
       - 'The plan hosts screenshots on a secret gist rather than committing binaries to the branch.'
       - 'The plan updates the PR body via the gh CLI with a side-by-side Before | After markdown table per viewport.'
       - 'The plan names files following the <screen>-<viewport>-<state> convention.'
+
+  - id: authenticated_state
+    user_message: |
+      /aa:review:screenshot
+
+      The PR restyles the wp-admin settings screen, which is behind a login. Capture before/after and add them to the PR.
+    must_include:
+      - 'Bash: gh '
+    rubric:
+      - 'The plan recognizes that the isolated Playwright browser starts logged-out and must authenticate before reaching the screen.'
+      - 'The plan logs in programmatically (navigate to the login page and fill credentials) and/or reuses a saved session via browser_storage_state / browser_set_storage_state, rather than assuming an already-logged-in real browser.'
+      - 'The plan still hosts on a secret gist and writes a side-by-side Before | After table in the PR body.'
 
   - id: animated_behavior_change
     user_message: |
@@ -32,9 +45,8 @@ scenarios:
     must_not_include:
       - 'Bash: git add .*\.(png|jpe?g|gif|webp|mp4)'
     rubric:
-      - 'The plan recognizes that an animated/behavioural change should be captured as a GIF instead of static PNGs.'
-      - 'The plan still hosts the GIF on a per-PR secret gist and links from the PR body.'
-      - 'The plan does not commit the GIF to the branch or main.'
+      - 'The plan recognizes that an animated/behavioural change should be captured as motion (a recording via browser_start_video/browser_stop_video, or a GIF) instead of two static stills.'
+      - 'The plan attaches the recording to the PR (e.g. hosts a GIF on a per-PR secret gist, or attaches the video), and does not commit the media to the branch or main.'
 
   - id: links_survive_force_push
     user_message: |
