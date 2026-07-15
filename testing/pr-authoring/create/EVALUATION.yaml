@@ -24,7 +24,7 @@ scenarios:
     rubric:
       - 'The plan gathers diff/commit context with git before composing the PR body.'
       - 'The plan uses the gh CLI to actually open the PR rather than only printing text.'
-      - 'The PR body follows the repo template if found, otherwise Why → What → references.'
+      - 'The PR body follows the repo template if found; otherwise it puts Why before What.'
 
   - id: branch_name_contains_issue
     user_message: |
