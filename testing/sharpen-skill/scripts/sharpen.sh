@@ -7,18 +7,16 @@
 #   sharpen.sh diff   <dir>            line delta + unified diff vs the backup
 #   sharpen.sh resolve                 print the resolved unvibe command
 #
-# unvibe resolution order: $UNVIBE_BIN -> `unvibe` on PATH -> uvx from git.
+# unvibe resolution order: $UNVIBE_BIN -> `unvibe` on PATH.
+# Using uvx is an explicit, human-approved opt-in via $UNVIBE_BIN; never fetch it
+# automatically.
 set -euo pipefail
-
-UNVIBE_REPO="git+https://github.com/aaronfc/unvibe.git"
 
 resolve_unvibe() {
   if [ -n "${UNVIBE_BIN:-}" ]; then
     read -r -a UNVIBE <<< "$UNVIBE_BIN"
   elif command -v unvibe >/dev/null 2>&1; then
     UNVIBE=(unvibe)
-  elif command -v uvx >/dev/null 2>&1; then
-    UNVIBE=(uvx --from "$UNVIBE_REPO" unvibe)
   else
     return 1
   fi
@@ -37,7 +35,11 @@ cmd_start() {
     cp "$dir/SKILL.md" "$dir/SKILL.md.orig"; echo "backup: SKILL.md -> SKILL.md.orig"
   fi
   [ -f "$dir/EVALUATION.yaml" ] && echo "eval: frozen (pre-existing)" || echo "eval: none (generate + prune)"
-  resolve_unvibe && echo "unvibe: ${UNVIBE[*]}" || echo "unvibe: unavailable"
+  if resolve_unvibe; then
+    echo "unvibe: ${UNVIBE[*]}"
+  else
+    echo "unvibe: unavailable (installation or uvx use requires explicit human approval)"
+  fi
   echo "lines: $(count "$dir/SKILL.md") (SKILL.md)"
 }
 
