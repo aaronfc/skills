@@ -1,7 +1,7 @@
 ---
-name: aa:review:screenshot
-description: Use when a PR touches the UI and needs visual proof, or the user says "/aa:review:screenshot". Captures before/after screenshots with Playwright (isolated browser, files saved straight to disk) and links them into the PR body.
-allowed-tools: Bash(gh *), Bash(git *), Bash(mv *), Bash(cp *), Bash(ls *), Bash(curl *), Bash(file *), Read, SendUserFile, mcp__playwright__browser_navigate, mcp__playwright__browser_navigate_back, mcp__playwright__browser_resize, mcp__playwright__browser_snapshot, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_click, mcp__playwright__browser_type, mcp__playwright__browser_fill_form, mcp__playwright__browser_press_key, mcp__playwright__browser_hover, mcp__playwright__browser_select_option, mcp__playwright__browser_wait_for, mcp__playwright__browser_console_messages, mcp__playwright__browser_network_requests, mcp__playwright__browser_evaluate, mcp__playwright__browser_storage_state, mcp__playwright__browser_set_storage_state, mcp__playwright__browser_start_video, mcp__playwright__browser_stop_video
+name: aa:create-pr:screenshots
+description: Add visual proof to a pull request for UI changes. Use only while creating or updating a PR that needs screenshots, when aa:create-pr delegates UI evidence work, or when the user invokes "/aa:create-pr:screenshots". Do not use for code review, reviewing a pull request or diff, or general UI testing. Captures before/after screenshots with Playwright and links them into the PR body.
+allowed-tools: Bash(gh *), Bash(git *), Bash(mv *), Bash(cp *), Bash(ls *), Bash(curl *), Bash(file *), Bash(*publish-pr-media.sh *), Read, SendUserFile, mcp__playwright__browser_navigate, mcp__playwright__browser_navigate_back, mcp__playwright__browser_resize, mcp__playwright__browser_snapshot, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_click, mcp__playwright__browser_type, mcp__playwright__browser_fill_form, mcp__playwright__browser_press_key, mcp__playwright__browser_hover, mcp__playwright__browser_select_option, mcp__playwright__browser_wait_for, mcp__playwright__browser_console_messages, mcp__playwright__browser_network_requests, mcp__playwright__browser_evaluate, mcp__playwright__browser_storage_state, mcp__playwright__browser_set_storage_state, mcp__playwright__browser_start_video, mcp__playwright__browser_stop_video
 ---
 # PR screenshots
 
@@ -79,27 +79,14 @@ minute returns "I don't have that tool" the next). Avoid re-driving:
 
 The shots are real local files, so hosting is the only remaining step for PR embedding.
 
-1. **Never commit binaries** to `main` or the branch. Host on a per-PR **secret gist**. This
-   renders in the PR for **both public and private repos**, because the gist is publicly fetchable
-   by GitHub's image proxy — which is also the caveat: a "secret" gist is *unlisted, not private*,
-   so the screenshot is public-by-URL and lives outside the repo's access control. Fine for typical
-   UI; reconsider for genuinely sensitive screens. (A committed-file `raw.githubusercontent.com`
-   URL would be simpler but **won't render in private-repo PRs** — the proxy can't fetch private
-   content — so gist it is.)
-2. **`gh gist create` cannot upload binary files** ("binary file not supported"), and its
-   **`--secret` flag doesn't exist** (secret is the default). So don't `gh gist create <png>`.
-   Instead:
-   - Create the gist from a text placeholder: `gh gist create --desc "<desc>" README.md` → capture
-     the returned gist URL / id.
-   - Gists are git repos: `git clone https://gist.github.com/<id>.git`, `cp` the PNGs in,
-     `git add -A && git commit && git push`. Binary pushed via git serves fine over raw.
-   - Get the pinned revision: `git -C <clone> rev-parse HEAD`. Owner login is in the gist URL.
-   - Build raw URLs as `https://gist.githubusercontent.com/<owner>/<id>/raw/<revisionsha>/<file>.png`.
-   - **Verify one raw URL** before wiring the PR: `curl -sL <url> | file -` should say
-     `PNG image data`. A `429` is just rate-limiting — wait a few seconds and retry one URL.
-3. Link the **raw** URL — pinned to the revision SHA (above), so images keep working even after a
-   PR force-push.
-4. In the PR body, show side-by-side `Before | After` markdown tables, one pair per viewport,
+1. **Never commit binaries** to `main` or the branch. Publish them with
+   `scripts/publish-pr-media.sh --description "<PR media description>" <media>...`. The script
+   creates a per-PR **secret gist** from a text placeholder, pushes the binaries through git,
+   verifies one upload, and prints revision-pinned raw URLs that survive PR force-pushes. A secret
+   gist is *unlisted, not private*: its media is public by URL, so do not publish sensitive screens.
+2. Link the revision-pinned **raw** URLs printed by the script. They render in both public and
+   private-repository PRs because GitHub's image proxy can fetch them.
+3. In the PR body, show side-by-side `Before | After` markdown tables, one pair per viewport,
    grouped per screen. Edit non-destructively: fetch the current body
    (`gh pr view <n> --json body --jq .body`), insert the screenshots section (e.g. before the
    trailing generated-by footer), and write it back with `gh pr edit <n> --body-file <file>` —

@@ -2,7 +2,7 @@ version: 1
 scenarios:
   - id: basic_ui_pr_screenshots
     user_message: |
-      /aa:review:screenshot
+      /aa:create-pr:screenshots
 
       I just pushed a PR that restyles the login form. Can you capture the screenshots and add them to the PR body?
     must_include:
@@ -25,7 +25,7 @@ scenarios:
 
   - id: authenticated_state
     user_message: |
-      /aa:review:screenshot
+      /aa:create-pr:screenshots
 
       The PR restyles the wp-admin settings screen, which is behind a login. Capture before/after and add them to the PR.
     must_include:
@@ -37,7 +37,7 @@ scenarios:
 
   - id: animated_behavior_change
     user_message: |
-      /aa:review:screenshot
+      /aa:create-pr:screenshots
 
       This PR changes the dropdown open/close animation timing. Please attach proof to the PR.
     must_include:
@@ -50,7 +50,7 @@ scenarios:
 
   - id: links_survive_force_push
     user_message: |
-      /aa:review:screenshot
+      /aa:create-pr:screenshots
 
       The header redesign PR is ready — please add screenshots. I want the image links to keep working even if I force-push later.
     must_include:
@@ -63,7 +63,7 @@ scenarios:
 
   - id: multiple_screens_pairing
     user_message: |
-      /aa:review:screenshot
+      /aa:create-pr:screenshots
 
       This PR touches three screens: the dashboard, the settings page, and the profile modal. Please document all of them visually.
     must_include:
@@ -77,7 +77,7 @@ scenarios:
 
   - id: updates_pr_body_via_gh
     user_message: |
-      /aa:review:screenshot
+      /aa:create-pr:screenshots
 
       Screenshots are captured already — just put them into the PR description with the standard layout.
     must_include:

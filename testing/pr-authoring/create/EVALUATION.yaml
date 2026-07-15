@@ -2,7 +2,7 @@ version: 1
 scenarios:
   - id: basic_pr_draft_checks_template
     user_message: |
-      /aa:review
+      /aa:create-pr
     must_include:
       - 'Bash: git (status|diff|log).*'
       - '(Glob|Read): .*PULL_REQUEST_TEMPLATE.*'
@@ -28,7 +28,7 @@ scenarios:
 
   - id: branch_name_contains_issue
     user_message: |
-      Draft a PR description for these changes. My branch is `fix/1234-broken-login`.
+      Create a PR for these changes. My branch is `fix/1234-broken-login`.
     must_include:
       - 'Bash: git .*'
     rubric:
@@ -36,11 +36,11 @@ scenarios:
 
   - id: ui_changes_triggers_screenshot
     user_message: |
-      Describe these changes — I just reworked the settings page styles and a couple of React components in the dashboard.
+      Update the current PR for these changes — I just reworked the settings page styles and a couple of React components in the dashboard.
     must_include:
       - 'Bash: git (diff|status|log).*'
     rubric:
-      - 'The plan recognizes the diff touches the UI and invokes or recommends /aa:review:screenshot.'
+      - 'The plan recognizes the diff touches the UI and invokes or recommends /aa:create-pr:screenshots.'
       - 'The plan inspects the actual diff to confirm UI files are affected rather than relying solely on the user message.'
 
   - id: backend_only_no_screenshot
@@ -49,7 +49,15 @@ scenarios:
     must_include:
       - 'Bash: git (diff|status|log).*'
     must_not_include:
-      - 'aa:review:screenshot'
+      - 'aa:create-pr:screenshots'
     rubric:
-      - 'The plan does not invoke /aa:review:screenshot for a backend-only change.'
+      - 'The plan does not invoke /aa:create-pr:screenshots for a backend-only change.'
       - 'The drafted PR body leads with Why (motivation for the migration/service change) before What (summary of changes).'
+
+  - id: code_review_is_out_of_scope
+    user_message: |
+      Review PR #123 for bugs and leave inline review comments.
+    must_not_include:
+      - 'Bash: gh pr (create|edit).*'
+    rubric:
+      - 'The response recognizes that a code-review-only request is outside aa:create-pr and does not create or edit a PR.'
