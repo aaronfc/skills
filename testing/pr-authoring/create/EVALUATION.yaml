@@ -33,6 +33,7 @@ scenarios:
       - 'Bash: git .*'
     rubric:
       - 'The draft includes a `Fixes #1234` (or `Relates to #1234`) reference derived from the branch name.'
+      - 'The issue reference is the first content in the PR description, before Why, What, template sections, or other prose.'
 
   - id: ui_changes_triggers_screenshot
     user_message: |

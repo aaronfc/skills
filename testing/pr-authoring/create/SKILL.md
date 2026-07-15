@@ -9,7 +9,7 @@ Use this workflow only to create or update a PR. If the user only asks for code 
 bug finding, approval, or review comments, do not create or edit a PR.
 
 1. Use the repo's PR template if present (`.github/PULL_REQUEST_TEMPLATE.md`, `.github/PULL_REQUEST_TEMPLATE/`, or `docs/`). Otherwise: **Why** → **What** → references.
-2. Add `Fixes #XXX` (or `Relates to #XXX`) when an issue is known from context/branch name.
+2. When an issue is known from context or the branch name, start the PR description with `Fixes #XXX` (or `Relates to #XXX`).
 3. **Why**: explain the motivation and problem carefully — this is the part reviewers most need.
 4. **What**: summarize the changes so the reviewer knows how to approach the diff.
 5. If the changes clearly affect the UI, also run `/aa:create-pr:screenshots`.
