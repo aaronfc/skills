@@ -1,6 +1,6 @@
 ---
-name: review-code
-description: Pre-review generated or changed code before handoff, commit, or pull request through independent security, consistency, and simplicity passes. Use when Codex should inspect its own implementation, run a final code review, or check a diff for evidence-backed issues before declaring work complete.
+name: aa:review-code
+description: Pre-review generated or changed code before handoff, commit, or pull request through independent security, consistency, and simplicity passes. Use when Codex should inspect its own implementation, run a final code review, check a diff for evidence-backed issues before declaring work complete, or invoke "/aa:review-code".
 ---
 
 # Review Code
