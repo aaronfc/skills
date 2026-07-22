@@ -9,6 +9,7 @@ scenarios:
       - 'Bash: .*gh issue close'
     rubric:
       - 'The plan starts by listing open issues labeled ready-for-agent before picking one.'
+      - 'The plan reads the complete issue comment history before choosing or acting.'
       - 'The plan branches off the default branch before making changes.'
       - 'The plan uses test-driven development to implement the slice.'
       - 'The plan uses /aa:create-pr (or invokes the aa:create-pr skill) to draft the PR description.'
@@ -23,6 +24,7 @@ scenarios:
     rubric:
       - 'The plan explicitly filters out issues whose dependencies are unfinished.'
       - 'The plan describes selecting an unblocked issue.'
+      - 'The plan reads all comments on candidate issues before choosing one.'
 
   - id: use_supplied_issue_without_choosing
     user_message: |
@@ -33,6 +35,7 @@ scenarios:
       - 'Bash: .*gh issue list'
     rubric:
       - 'The plan uses the supplied issue directly instead of searching for or choosing another issue.'
+      - 'The plan reads all comments on issue 42 before acting.'
       - 'The plan proceeds end-to-end with issue 42.'
 
   - id: prefer_smallest_when_multiple_qualify
@@ -65,3 +68,59 @@ scenarios:
       - 'The plan only opens the PR after acceptance criteria are met.'
       - 'The PR description is drafted via the aa:create-pr skill and links the issue with "Fixes #N".'
       - 'The plan reports back the issue picked and the PR link at the end.'
+
+  - id: research_issue_reports_to_comment
+    user_message: |
+      /aa:afk https://github.com/example/project/issues/42
+
+      This is explicitly a research issue. Investigate the options and recommend an approach.
+    must_include:
+      - 'Bash: .*gh issue view.*(42|https://github.com/example/project/issues/42).*(--comments|-c)'
+      - 'Bash: .*gh issue comment.*(42|https://github.com/example/project/issues/42)'
+      - 'Bash: .*gh issue edit.*(42|https://github.com/example/project/issues/42)'
+    must_not_include:
+      - 'Bash: .*git (checkout|switch)'
+      - 'Bash: .*git commit'
+      - 'Bash: .*gh pr create'
+      - 'Bash: .*gh issue close'
+    rubric:
+      - 'The issue is classified as research because it explicitly requests research.'
+      - 'The plan reads the title, body, and complete chronological comment history before researching.'
+      - 'The final persisted output is a new, self-contained issue comment rather than a repository file or PR.'
+      - 'The report structure is adapted to the research while covering conclusions, findings and evidence, recommendations, and uncertainty where useful.'
+      - 'After posting the report, the plan removes ready-for-agent, adds ready-for-human, and leaves the issue open.'
+      - 'The plan reports the issue and links the new comment.'
+
+  - id: research_requires_inspectable_proof
+    user_message: |
+      Grab the ready research issue comparing the two proposed approaches. You may run a
+      disposable proof of concept, but leave the repository untouched and report the result.
+    must_include:
+      - 'Bash: .*gh issue list.*ready-for-agent'
+      - 'Bash: .*gh issue comment'
+    must_not_include:
+      - 'Bash: .*git commit'
+      - 'Bash: .*gh pr create'
+      - 'Bash: .*gh issue close'
+    rubric:
+      - 'The plan leaves the worktree unchanged and persists no research files in the repository.'
+      - 'Every research claim is backed by inspectable evidence such as cited repository lines, authoritative links, or reproducible commands and observed output.'
+      - 'Any disposable code or files used in the proof are represented in the report with their relevant contents and results, not merely local paths.'
+      - 'The plan distinguishes observations from inferences, recommendations, and uncertainty.'
+
+  - id: follow_up_research_appends_after_reading_comments
+    user_message: |
+      /aa:afk 42 — this research issue already has an earlier AFK report, followed by a human
+      comment asking for another experiment. Perform the follow-up research pass.
+    must_include:
+      - 'Bash: .*gh issue view.*42.*(--comments|-c)'
+      - 'Bash: .*gh issue comment.*42'
+    must_not_include:
+      - 'Bash: .*gh issue comment.*--edit-last'
+      - 'Bash: .*gh pr create'
+      - 'Bash: .*gh issue close'
+    rubric:
+      - 'The plan reads the entire chronological thread and treats the newer human comment as refined scope.'
+      - 'The follow-up findings are appended as a new comment instead of editing or replacing the earlier report.'
+      - 'The follow-up report includes inspectable proof for the new experiment.'
+      - 'The issue remains open and is handed back with ready-for-human after the new report is posted.'
