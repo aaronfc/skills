@@ -1,4 +1,4 @@
-version: 1
+version: 2
 scenarios:
   - id: basic_pr_draft_checks_template
     user_message: |
@@ -13,6 +13,7 @@ scenarios:
       - 'The plan inspects the current branch state (git status/diff/log) before drafting.'
       - 'The plan checks for a repository PR template under .github/ (and optionally docs/) before deciding on a structure.'
       - 'The drafted PR body leads with Why (motivation/problem) before What (summary of changes).'
+      - 'The drafted PR body includes separate Testing Steps and Proofs sections; Testing Steps explains how to exercise the changed behavior, while Proofs reports evidence already collected.'
 
   - id: open_pr_with_gh
     user_message: |
@@ -25,6 +26,7 @@ scenarios:
       - 'The plan gathers diff/commit context with git before composing the PR body.'
       - 'The plan uses the gh CLI to actually open the PR rather than only printing text.'
       - 'The PR body follows the repo template if found; otherwise it puts Why before What.'
+      - 'The PR body gives a reviewer exact, reproducible Testing Steps and concise, change-appropriate Proofs rather than treating automated checks as the only testing guidance.'
 
   - id: branch_name_contains_issue
     user_message: |
@@ -43,6 +45,7 @@ scenarios:
     rubric:
       - 'The plan recognizes the diff touches the UI and invokes or recommends /aa:create-pr:screenshots.'
       - 'The plan inspects the actual diff to confirm UI files are affected rather than relying solely on the user message.'
+      - 'The PR body places the before/after visual evidence under Proofs and keeps separate Testing Steps for reproducing the UI behavior.'
 
   - id: backend_only_no_screenshot
     user_message: |
@@ -54,6 +57,47 @@ scenarios:
     rubric:
       - 'The plan does not invoke /aa:create-pr:screenshots for a backend-only change.'
       - 'The drafted PR body leads with Why (motivation for the migration/service change) before What (summary of changes).'
+      - 'Testing Steps provides the exact setup/request or command sequence and expected response/state for the changed backend behavior.'
+      - 'Proofs contains concise observed request/response or state evidence plus automated check outcomes; it does not consist only of a test-command list.'
+
+  - id: cli_change_has_reproduction_and_before_after_proof
+    user_message: |
+      Create a PR for my tasktool change. `task done` now prints the workspace's network summary
+      before confirmation. The branch includes regression tests for filtering and the empty state.
+    must_include:
+      - 'Bash: git (diff|status|log).*'
+    rubric:
+      - 'The drafted PR body contains distinct `## Testing Steps` and `## Proofs` sections rather than combining reproduction guidance and collected evidence under a generic testing heading.'
+      - 'Testing Steps tells a reviewer how to create/enter a task workspace, cause or provide representative network activity, run `task done`, and identify the expected network-summary output before confirmation.'
+      - 'Testing Steps resolves the repository-specific commands for creating/entering the workspace and generating activity; it does not leave executable setup as vague prose.'
+      - 'Testing Steps includes an explicit expected observation and covers the empty-state path when it is cheap to do so, instead of merely listing test-suite commands.'
+      - 'Proofs shows compact before-versus-after CLI output (or equivalently direct observed behavioral evidence) and separately summarizes the automated regression-test results.'
+      - 'If the agent collects fresh before/after proof, it avoids disturbing the current working tree by using an isolated worktree or equivalent existing artifacts.'
+      - 'The evidence is concise and ordered so the changed behavior can be judged before reading detailed automated check results.'
+
+  - id: prompt_change_uses_comparable_eval_proof
+    user_message: |
+      Open a PR for this prompt change. It makes the support agent ask one clarifying question
+      instead of guessing when the account type is missing. I ran our eval set before and after.
+    must_include:
+      - 'Bash: git (diff|status|log).*'
+    rubric:
+      - 'The drafted PR body contains distinct `## Testing Steps` and `## Proofs` sections rather than combining reproduction guidance and collected evidence under a generic testing heading.'
+      - 'Testing Steps includes the exact representative prompt/input, required setup, and the expected clarifying behavior so a reviewer can reproduce it.'
+      - 'Proofs compares before and after using the same eval inputs, reports concise pre/post results, and includes representative output evidence rather than only saying the eval passed.'
+      - 'Automated checks or eval commands are reported as supporting evidence without replacing the human-runnable Testing Steps.'
+
+  - id: unavailable_manual_path_is_explicit
+    user_message: |
+      Update the PR for this dependency-only build change. The vendor service needed for a full
+      manual run is unavailable in local development, but the fixture-based integration check ran.
+    must_include:
+      - 'Bash: git (diff|status|log).*'
+    rubric:
+      - 'The drafted PR body contains distinct `## Testing Steps` and `## Proofs` sections rather than combining reproduction guidance and collected evidence under a generic testing heading.'
+      - 'The PR does not fabricate a manual run: Testing Steps states the external-service constraint and gives the closest reproducible local fixture-based verification.'
+      - 'Proofs clearly distinguishes observed integration-check evidence from the unavailable end-to-end path, including a concise reason for what was not run.'
+      - 'The body remains useful and compact rather than omitting testing guidance because full manual exercise is unavailable.'
 
   - id: code_review_is_out_of_scope
     user_message: |
