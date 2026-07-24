@@ -19,4 +19,4 @@ npx skills@latest add aaronfc/skills
 
 ## Evaluations
 
-Some skills ship with an `EVALUATION.yaml`. I'm using these to dogfood [unvibe](https://github.com/aaronfc/unvibe), a framework I built for writing evaluations for skills.
+Some skills ship with an `EVALUATIONS.yaml`. I'm using these to dogfood [unvibe](https://github.com/aaronfc/unvibe), a framework I built for writing evaluations for skills.

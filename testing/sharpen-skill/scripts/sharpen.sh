@@ -34,7 +34,7 @@ cmd_start() {
   else
     cp "$dir/SKILL.md" "$dir/SKILL.md.orig"; echo "backup: SKILL.md -> SKILL.md.orig"
   fi
-  [ -f "$dir/EVALUATION.yaml" ] && echo "eval: frozen (pre-existing)" || echo "eval: none (generate + prune)"
+  [ -f "$dir/EVALUATIONS.yaml" ] && echo "eval: frozen (pre-existing)" || echo "eval: none (generate + prune)"
   if resolve_unvibe; then
     echo "unvibe: ${UNVIBE[*]}"
   else
