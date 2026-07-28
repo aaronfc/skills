@@ -1,7 +1,9 @@
 ---
 name: to-prd
-description: Turn the current conversation context into a PRD and publish it to the project issue tracker. Use when user wants to create a PRD from the current context.
+description: Turn the current conversation context into a PRD and publish it to the project issue tracker. Use only when the user explicitly invokes "/to-prd". Do not trigger automatically when the user asks to create, draft, or publish a PRD.
 ---
+
+If the user did not explicitly invoke `/to-prd`, stop without creating or publishing a PRD.
 
 This skill takes the current conversation context and codebase understanding and produces a PRD. Do NOT interview the user — just synthesize what you already know.
 
