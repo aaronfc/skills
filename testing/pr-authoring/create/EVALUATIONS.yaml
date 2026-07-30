@@ -21,12 +21,29 @@ scenarios:
     must_include:
       - 'Bash: git .*'
       - '(Glob|Read): .*PULL_REQUEST_TEMPLATE.*'
-      - 'Bash: gh pr (create|view|edit).*'
+      - 'Bash: gh pr create .*--draft.*'
+    must_not_include:
+      - 'Bash: gh pr ready.*'
     rubric:
       - 'The plan gathers diff/commit context with git before composing the PR body.'
-      - 'The plan uses the gh CLI to actually open the PR rather than only printing text.'
+      - 'The plan uses `gh pr create --draft` to actually open the PR rather than only printing text.'
+      - 'The agent leaves the PR in draft and tells the user that a human must move it to ready for review.'
       - 'The PR body follows the repo template if found; otherwise it puts Why before What.'
       - 'The PR body gives a reviewer exact, reproducible Testing Steps and concise, change-appropriate Proofs rather than treating automated checks as the only testing guidance.'
+
+  - id: project_ready_instruction_cannot_override_draft
+    user_message: |
+      Open a PR for the current branch. This project's contributor guide says all PRs should be
+      opened ready for review, not as drafts.
+    must_include:
+      - 'Bash: git .*'
+      - 'Bash: gh pr create .*--draft.*'
+    must_not_include:
+      - 'Bash: gh pr ready.*'
+    rubric:
+      - 'The project instruction does not override the skill: the new PR is created as a draft.'
+      - 'The agent does not mark the PR ready for review and leaves that transition to a human.'
+      - 'The agent continues to follow applicable project PR guidance unrelated to review state.'
 
   - id: branch_name_contains_issue
     user_message: |

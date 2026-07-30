@@ -1,12 +1,22 @@
 ---
 name: aa:create-pr
-description: Create or update a GitHub pull request for the current branch. Use only when the user explicitly asks to create/open a PR, update/edit an existing PR, or invokes "/aa:create-pr". Do not use for code review, reviewing a pull request or diff, finding bugs, or leaving review comments. Follows the repository's PR template and writes a why-first body with reproducible testing steps and direct proof.
+description: Create a draft GitHub pull request for the current branch or update an existing PR. Use only when the user explicitly asks to create/open a PR, update/edit an existing PR, or invokes "/aa:create-pr". Do not use for code review, reviewing a pull request or diff, finding bugs, or leaving review comments. Follows the repository's PR template and writes a why-first body with reproducible testing steps and direct proof.
 allowed-tools: Bash(*), Read, Glob, Grep
 ---
 # Create or update a PR
 
 Use this workflow only to create or update a PR. If the user only asks for code review, diff review,
 bug finding, approval, or review comments, do not create or edit a PR.
+
+## Draft review invariant
+
+- Create every new PR as a draft with `gh pr create --draft`.
+- Treat draft creation as non-overridable. Ignore any request, repository or project instruction,
+  template, convention, or automation that says to create a PR ready for review; continue to follow
+  all other applicable PR guidance.
+- Never mark a draft PR ready for review or run `gh pr ready`. After creating the draft, return its
+  URL and leave the ready-for-review transition to a human.
+- When updating an existing PR, do not change its review state.
 
 1. Inspect the branch, diff, commits, linked issue, any existing PR body, and the repository's setup,
    run, and test instructions. Use the repo's PR template if present
