@@ -1,0 +1,64 @@
+version: 1
+scenarios:
+  - id: await_initial_review
+    user_message: |
+      /aa:babysit-pr https://github.com/example/widgets/pull/42 --until approved,new-comment
+    must_include:
+      - 'Bash: .*scripts/wait-for-pr.py.*https://github.com/example/widgets/pull/42.*--until.*approved,new-comment'
+    rubric:
+      - 'The agent starts one bundled waiter for the supplied PR and requested conditions.'
+      - 'The agent waits by resuming the same long-running process instead of polling GitHub itself or restarting the script.'
+      - 'The final report names the event and actor, links directly to it, and says whether attention is needed.'
+
+  - id: fresh_baseline_after_revision
+    user_message: |
+      I pushed fixes for the previous review on PR 42. Wait for the next approval or human feedback without waking on the old review.
+    rubric:
+      - 'The agent resolves PR 42 only if the current repository is unambiguous.'
+      - 'The agent starts exactly one new waiter after the stated push, relying on its startup baseline to ignore old activity.'
+      - 'The agent does not repeatedly invoke the waiter or perform a separate gh polling loop.'
+
+  - id: wait_for_merge_and_feedback
+    user_message: |
+      Watch https://github.com/example/widgets/pull/42 until it merges, but wake me early if it closes or receives new review feedback.
+    must_include:
+      - 'Bash: .*scripts/wait-for-pr.py.*--until.*merged,new-comment'
+    rubric:
+      - 'The waiter requests merged and new-comment; the agent knows closure stops it even though closure is not a success condition.'
+      - 'The report distinguishes a successful merge from closure or actionable feedback.'
+
+  - id: tmux_handoff
+    user_message: |
+      Babysit https://github.com/example/widgets/pull/42 in tmux while I work elsewhere. I will inspect the result later.
+    rubric:
+      - 'The agent leaves one bundled waiter running in the requested tmux context and preserves its single baseline.'
+      - 'The command records the JSON result somewhere the user can inspect later.'
+      - 'The agent does not mutate the pull request.'
+
+  - id: github_enterprise
+    user_message: |
+      Wait for new human feedback on https://git.corp.example/platform/widgets/pull/91.
+    must_include:
+      - 'Bash: .*scripts/wait-for-pr.py.*https://git.corp.example/platform/widgets/pull/91.*--until.*new-comment'
+    rubric:
+      - 'The agent passes the full Enterprise URL to the waiter and lets it derive the gh hostname.'
+      - 'The agent does not assume github.com or rewrite the URL.'
+
+  - id: read_only_by_default
+    user_message: |
+      /aa:babysit-pr https://github.com/example/widgets/pull/42, and let me know what happens.
+    must_not_include:
+      - 'Bash: .*gh pr (comment|edit|merge|review)'
+      - 'Bash: .*git push'
+    rubric:
+      - 'The agent defaults to approved,new-comment and only watches the PR.'
+      - 'The agent does not reply, push, request reviewers, approve, merge, or make any other follow-up change.'
+
+  - id: bot_activity_is_opt_in
+    user_message: |
+      Watch PR 42 for review activity, but ignore CI and other bots.
+    must_not_include:
+      - '--include-bots'
+    rubric:
+      - 'The agent relies on the waiter default that ignores bot activity.'
+      - 'The agent reports only human feedback or terminal PR state.'
