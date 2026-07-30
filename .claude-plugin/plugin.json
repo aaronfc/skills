@@ -8,6 +8,7 @@
     "./testing/pr-authoring/screenshots",
     "./testing/sharpen-skill",
     "./testing/afk",
+    "./testing/babysit-pr",
     "./testing/review-code",
     "./testing/mattpocock/grill-me",
     "./testing/mattpocock/grill-with-docs",
