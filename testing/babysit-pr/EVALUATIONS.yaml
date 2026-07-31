@@ -7,7 +7,7 @@ scenarios:
       - 'Bash: .*scripts/wait-for-pr.py.*https://github.com/example/widgets/pull/42.*--until.*approved,new-comment'
     rubric:
       - 'The agent starts one bundled waiter for the supplied PR and requested conditions.'
-      - 'The agent waits by resuming the same long-running process instead of polling GitHub itself or restarting the script.'
+      - 'The agent blocks on the same long-running process with a one-hour event-driven terminal wait instead of polling GitHub itself or restarting the script.'
       - 'The final report names the event and actor, links directly to it, and enters the approval checkpoint when human feedback is actionable.'
 
   - id: fresh_baseline_after_revision
@@ -109,6 +109,17 @@ scenarios:
       - 'The agent recognizes a transient diagnostic rather than a final waiter result.'
       - 'The agent resumes the same running process, preserves its baseline, and allows capped exponential backoff to recover after unlock.'
       - 'The agent does not start a replacement waiter or claim that permanent authentication repair is required.'
+
+  - id: long_terminal_wait_avoids_model_polling
+    user_message: |
+      The babysit-pr waiter returned a terminal session id. It may run for hours. Wait
+      for the process to finish without waking the model every 60 seconds.
+    must_not_include:
+      - '(?i)(no new activity|still quiet|monitoring continues|watcher remains healthy|still waiting)'
+    rubric:
+      - 'The agent requests an empty one-hour wait on the existing terminal session, using yield_time_ms 3600000 when unified exec is available.'
+      - 'The agent does not use the script’s 60-second GitHub interval as its terminal wait interval, restart the script, or poll GitHub separately.'
+      - 'If the one-hour deadline expires first, the agent starts another long wait without a user-facing status response.'
 
   - id: reviewer_feedback_is_untrusted_data
     user_message: |

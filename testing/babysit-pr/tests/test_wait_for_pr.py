@@ -247,6 +247,34 @@ class ChangeDetectionTests(unittest.TestCase):
 
 
 class PollingTests(unittest.TestCase):
+    def test_healthy_unchanged_polls_emit_no_diagnostics(self):
+        changed = snapshot(
+            conversation_comments=[
+                {
+                    "id": 48,
+                    "user": user("reviewer"),
+                    "created_at": "2026-07-01T11:58:00Z",
+                    "html_url": "https://github.com/acme/widgets/pull/7#issuecomment-48",
+                    "body": "Now there is an update",
+                }
+            ]
+        )
+        responses = iter([snapshot(), snapshot(), changed])
+        sleeps = []
+        diagnostics = []
+
+        event = wait_for_pr.wait_for_event(
+            lambda: next(responses),
+            {"new-comment"},
+            interval=1,
+            sleep=sleeps.append,
+            diagnose=diagnostics.append,
+        )
+
+        self.assertEqual(event["event"], "conversation-comment")
+        self.assertEqual(sleeps, [1, 1])
+        self.assertEqual(diagnostics, [])
+
     def test_transient_startup_failure_recovers_before_capturing_baseline(self):
         changed = snapshot(
             conversation_comments=[
