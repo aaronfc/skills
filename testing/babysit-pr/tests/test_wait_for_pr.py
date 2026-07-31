@@ -247,6 +247,54 @@ class ChangeDetectionTests(unittest.TestCase):
 
 
 class PollingTests(unittest.TestCase):
+    def test_transient_startup_failure_recovers_before_capturing_baseline(self):
+        changed = snapshot(
+            conversation_comments=[
+                {
+                    "id": 49,
+                    "user": user("reviewer"),
+                    "created_at": "2026-07-01T11:59:00Z",
+                    "html_url": "https://github.com/acme/widgets/pull/7#issuecomment-49",
+                    "body": "After startup recovery",
+                }
+            ]
+        )
+        responses = iter(
+            [
+                wait_for_pr.FetchError(
+                    "secure enclave is unavailable",
+                    transient=True,
+                    category="credential-unavailable",
+                ),
+                snapshot(),
+                changed,
+            ]
+        )
+        sleeps = []
+        diagnostics = []
+
+        def source():
+            value = next(responses)
+            if isinstance(value, Exception):
+                raise value
+            return value
+
+        event = wait_for_pr.wait_for_event(
+            source,
+            {"new-comment"},
+            interval=1,
+            max_backoff=4,
+            sleep=sleeps.append,
+            diagnose=diagnostics.append,
+        )
+
+        self.assertEqual(event["event"], "conversation-comment")
+        self.assertEqual(sleeps, [2, 1])
+        self.assertEqual(
+            [notice["phase"] for notice in diagnostics], ["baseline", "baseline"]
+        )
+        self.assertFalse(diagnostics[1]["baseline_preserved"])
+
     def test_transient_failure_backs_off_then_recovers(self):
         changed = snapshot(
             conversation_comments=[
@@ -262,12 +310,14 @@ class PollingTests(unittest.TestCase):
         responses = iter(
             [
                 snapshot(),
-                wait_for_pr.FetchError("temporary outage", transient=True),
+                wait_for_pr.FetchError(
+                    "temporary outage", transient=True, category="network"
+                ),
                 changed,
             ]
         )
         sleeps = []
-        warnings = []
+        diagnostics = []
 
         def source():
             value = next(responses)
@@ -281,12 +331,85 @@ class PollingTests(unittest.TestCase):
             interval=1,
             max_backoff=8,
             sleep=sleeps.append,
-            warn=warnings.append,
+            diagnose=diagnostics.append,
         )
 
         self.assertEqual(event["event"], "conversation-comment")
         self.assertEqual(sleeps, [1, 2])
-        self.assertEqual(warnings, ["temporary outage; retrying in 2s"])
+        self.assertEqual(
+            [notice["status"] for notice in diagnostics],
+            ["poll-retry", "poll-recovered"],
+        )
+        self.assertEqual(
+            diagnostics[0],
+            {
+                "status": "poll-retry",
+                "phase": "poll",
+                "attempt": 1,
+                "delay_seconds": 2,
+                "max_backoff_seconds": 8,
+                "error_class": "network",
+                "error": "temporary outage",
+                "guidance": "waiter is still running; resume this process instead of restarting it",
+            },
+        )
+        self.assertEqual(diagnostics[1]["attempts"], 1)
+        self.assertTrue(diagnostics[1]["baseline_preserved"])
+
+    def test_repeated_failures_cap_backoff_and_reset_after_recovery(self):
+        changed = snapshot(
+            conversation_comments=[
+                {
+                    "id": 51,
+                    "user": user("reviewer"),
+                    "created_at": "2026-07-01T12:01:00Z",
+                    "html_url": "https://github.com/acme/widgets/pull/7#issuecomment-51",
+                    "body": "Connection is back",
+                }
+            ]
+        )
+        def offline():
+            return wait_for_pr.FetchError(
+                "network is unreachable", transient=True, category="network"
+            )
+        responses = iter(
+            [
+                snapshot(),
+                offline(),
+                offline(),
+                offline(),
+                snapshot(),
+                offline(),
+                changed,
+            ]
+        )
+        sleeps = []
+        diagnostics = []
+
+        def source():
+            value = next(responses)
+            if isinstance(value, Exception):
+                raise value
+            return value
+
+        event = wait_for_pr.wait_for_event(
+            source,
+            {"new-comment"},
+            interval=1,
+            max_backoff=4,
+            sleep=sleeps.append,
+            diagnose=diagnostics.append,
+        )
+
+        self.assertEqual(event["event"], "conversation-comment")
+        self.assertEqual(sleeps, [1, 2, 4, 4, 1, 2])
+        retries = [item for item in diagnostics if item["status"] == "poll-retry"]
+        recoveries = [
+            item for item in diagnostics if item["status"] == "poll-recovered"
+        ]
+        self.assertEqual([item["attempt"] for item in retries], [1, 2, 3, 1])
+        self.assertEqual([item["delay_seconds"] for item in retries], [2, 4, 4, 2])
+        self.assertEqual([item["attempts"] for item in recoveries], [3, 1])
 
     def test_authentication_failure_is_reported_without_retrying(self):
         calls = 0
@@ -353,6 +476,56 @@ class GitHubClientTests(unittest.TestCase):
 
         self.assertFalse(raised.exception.transient)
         self.assertIn("could not run gh", str(raised.exception))
+
+    def test_locked_keychain_failure_is_retryable(self):
+        def runner(command, **kwargs):
+            return type(
+                "Result",
+                (),
+                {
+                    "returncode": 1,
+                    "stdout": "",
+                    "stderr": "failed to retrieve token: user interaction is not allowed (OSStatus error -25308)",
+                },
+            )()
+
+        client = wait_for_pr.GitHubClient("github.com", runner=runner)
+
+        with self.assertRaises(wait_for_pr.FetchError) as raised:
+            client.get("repos/acme/widgets/pulls/7")
+
+        self.assertTrue(raised.exception.transient)
+        self.assertEqual(raised.exception.category, "credential-unavailable")
+
+
+class FailureClassificationTests(unittest.TestCase):
+    def test_classifies_recoverable_and_permanent_failures(self):
+        cases = {
+            "error connecting to api.github.com: network is unreachable": (
+                True,
+                "network",
+            ),
+            'Get "https://api.github.com": EOF': (True, "network"),
+            "failed to retrieve token: secure enclave is unavailable": (
+                True,
+                "credential-unavailable",
+            ),
+            "failed to retrieve token: keyring is locked": (
+                True,
+                "credential-unavailable",
+            ),
+            "gh: API rate limit exceeded (HTTP 403)": (True, "rate-limit"),
+            "gh: Service Unavailable (HTTP 503)": (True, "github"),
+            "gh: Bad credentials (HTTP 401)": (False, "permanent"),
+            "gh: Not Found (HTTP 404)": (False, "permanent"),
+        }
+
+        for message, expected in cases.items():
+            with self.subTest(message=message):
+                classification = wait_for_pr.classify_failure(message)
+                self.assertEqual(
+                    (classification.transient, classification.category), expected
+                )
 
 
 if __name__ == "__main__":

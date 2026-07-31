@@ -26,10 +26,18 @@ class Target(NamedTuple):
     number: int
 
 
+class FailureClassification(NamedTuple):
+    transient: bool
+    category: str
+
+
 class FetchError(RuntimeError):
-    def __init__(self, message: str, *, transient: bool):
+    def __init__(
+        self, message: str, *, transient: bool, category: str | None = None
+    ):
         super().__init__(message)
         self.transient = transient
+        self.category = category or ("transient" if transient else "permanent")
 
 
 def parse_target(
@@ -78,25 +86,70 @@ def _decode_json_stream(raw: str) -> Any:
     return values
 
 
-def _classify_failure(message: str) -> bool:
+def classify_failure(message: str) -> FailureClassification:
+    """Distinguish failures worth retrying from terminal access/configuration errors."""
     lowered = message.lower()
-    transient_markers = (
+    credential_markers = (
+        "user interaction is not allowed",
+        "interaction not allowed",
+        "errsecinteractionnotallowed",
+        "osstatus error -25308",
+        "secure enclave is unavailable",
+        "keychain is locked",
+        "keyring is locked",
+        "locked keyring",
+        "credential store is locked",
+        "failed to unlock keychain",
+    )
+    rate_limit_markers = (
         "rate limit",
         "secondary rate",
+        "http 429",
+    )
+    github_markers = (
         "temporarily unavailable",
         "temporary failure",
-        "timed out",
-        "timeout",
-        "connection reset",
-        "connection refused",
-        "could not resolve host",
-        "network is unreachable",
         "http 500",
         "http 502",
         "http 503",
         "http 504",
+        "502 bad gateway",
+        "503 service unavailable",
+        "504 gateway timeout",
     )
-    return any(marker in lowered for marker in transient_markers)
+    network_markers = (
+        "error connecting to",
+        "failed to connect",
+        "timed out",
+        "timeout",
+        "connection reset",
+        "connection refused",
+        "connection closed",
+        "connection aborted",
+        "broken pipe",
+        "could not resolve host",
+        "temporary failure in name resolution",
+        "no such host",
+        "network is unreachable",
+        "network connection was lost",
+        "no route to host",
+        "tls handshake timeout",
+        "unexpected eof",
+        ": eof",
+        "i/o timeout",
+        "context deadline exceeded",
+        "stream error",
+        "dial tcp",
+    )
+    for category, markers in (
+        ("credential-unavailable", credential_markers),
+        ("rate-limit", rate_limit_markers),
+        ("network", network_markers),
+        ("github", github_markers),
+    ):
+        if any(marker in lowered for marker in markers):
+            return FailureClassification(True, category)
+    return FailureClassification(False, "permanent")
 
 
 class GitHubClient:
@@ -134,15 +187,19 @@ class GitHubClient:
             raise FetchError(f"could not run gh: {error}", transient=False) from error
         if result.returncode != 0:
             detail = (result.stderr or result.stdout or "unknown gh failure").strip()
+            classification = classify_failure(detail)
             raise FetchError(
                 f"GitHub API request failed: {detail}",
-                transient=_classify_failure(detail),
+                transient=classification.transient,
+                category=classification.category,
             )
         try:
             return _decode_json_stream(result.stdout)
         except (ValueError, json.JSONDecodeError) as error:
             raise FetchError(
-                f"GitHub returned invalid JSON: {error}", transient=True
+                f"GitHub returned invalid JSON: {error}",
+                transient=True,
+                category="invalid-response",
             ) from error
 
 
@@ -160,9 +217,11 @@ def resolve_current_repo(
         raise FetchError(f"could not run gh: {error}", transient=False) from error
     if result.returncode != 0:
         detail = (result.stderr or result.stdout or "unknown gh failure").strip()
+        classification = classify_failure(detail)
         raise FetchError(
             f"could not resolve current repository: {detail}",
-            transient=_classify_failure(detail),
+            transient=classification.transient,
+            category=classification.category,
         )
     try:
         data = json.loads(result.stdout)
@@ -201,7 +260,11 @@ class SnapshotSource:
             isinstance(items, list)
             for items in (conversation_comments, reviews, inline_comments)
         ):
-            raise FetchError("GitHub returned an unexpected response shape", transient=True)
+            raise FetchError(
+                "GitHub returned an unexpected response shape",
+                transient=True,
+                category="invalid-response",
+            )
         return {
             "pr": pr,
             "conversation_comments": conversation_comments,
@@ -366,8 +429,51 @@ def _interrupted_event() -> dict[str, Any]:
     return _result("interrupted", body="Wait interrupted")
 
 
-def _seconds(value: float) -> str:
-    return f"{value:g}s"
+def _json_number(value: float) -> int | float:
+    number = float(value)
+    return int(number) if number.is_integer() else number
+
+
+def _emit_diagnostic(payload: dict[str, Any]) -> None:
+    print(json.dumps(payload, sort_keys=True), file=sys.stderr, flush=True)
+
+
+def _retry_diagnostic(
+    error: FetchError,
+    *,
+    phase: str,
+    attempt: int,
+    delay: float,
+    max_backoff: float,
+) -> dict[str, Any]:
+    return {
+        "status": "poll-retry",
+        "phase": phase,
+        "attempt": attempt,
+        "delay_seconds": _json_number(delay),
+        "max_backoff_seconds": _json_number(max_backoff),
+        "error_class": error.category,
+        "error": str(error),
+        "guidance": "waiter is still running; resume this process instead of restarting it",
+    }
+
+
+def _recovery_diagnostic(
+    *, phase: str, attempts: int, interval: float
+) -> dict[str, Any]:
+    baseline_preserved = phase == "poll"
+    return {
+        "status": "poll-recovered",
+        "phase": phase,
+        "attempts": attempts,
+        "next_poll_seconds": _json_number(interval),
+        "baseline_preserved": baseline_preserved,
+        "guidance": (
+            "connection recovered; original baseline is still active"
+            if baseline_preserved
+            else "connection recovered; startup baseline is now established"
+        ),
+    }
 
 
 def wait_for_event(
@@ -378,13 +484,12 @@ def wait_for_event(
     interval: float = DEFAULT_INTERVAL,
     max_backoff: float = DEFAULT_MAX_BACKOFF,
     sleep: Callable[[float], None] = time.sleep,
-    warn: Callable[[str], None] = lambda message: print(
-        f"warning: {message}", file=sys.stderr, flush=True
-    ),
+    diagnose: Callable[[dict[str, Any]], None] = _emit_diagnostic,
 ) -> dict[str, Any]:
     """Capture a baseline, then wait with bounded backoff until an event occurs."""
     try:
         delay = interval
+        failures = 0
         while True:
             try:
                 baseline = source()
@@ -392,15 +497,31 @@ def wait_for_event(
             except FetchError as error:
                 if not error.transient:
                     return _error_event(str(error))
+                failures += 1
                 delay = min(max_backoff, delay * 2)
-                warn(f"{error}; retrying in {_seconds(delay)}")
+                diagnose(
+                    _retry_diagnostic(
+                        error,
+                        phase="baseline",
+                        attempt=failures,
+                        delay=delay,
+                        max_backoff=max_backoff,
+                    )
+                )
                 sleep(delay)
 
+        if failures:
+            diagnose(
+                _recovery_diagnostic(
+                    phase="baseline", attempts=failures, interval=interval
+                )
+            )
         terminal = _terminal_event(baseline)
         if terminal is not None:
             return terminal
 
         delay = interval
+        failures = 0
         while True:
             sleep(delay)
             try:
@@ -408,10 +529,26 @@ def wait_for_event(
             except FetchError as error:
                 if not error.transient:
                     return _error_event(str(error))
+                failures += 1
                 delay = min(max_backoff, delay * 2)
-                warn(f"{error}; retrying in {_seconds(delay)}")
+                diagnose(
+                    _retry_diagnostic(
+                        error,
+                        phase="poll",
+                        attempt=failures,
+                        delay=delay,
+                        max_backoff=max_backoff,
+                    )
+                )
                 continue
 
+            if failures:
+                diagnose(
+                    _recovery_diagnostic(
+                        phase="poll", attempts=failures, interval=interval
+                    )
+                )
+                failures = 0
             delay = interval
             event = detect_event(
                 baseline,
@@ -479,7 +616,11 @@ def _exit_code(event: dict[str, Any], conditions: set[str]) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Wait read-only for pull-request review events via gh.",
-        epilog="Exit codes: 0 requested event, 2 error, 3 unrequested terminal state, 130 interrupted.",
+        epilog=(
+            "Transient failures retry indefinitely and emit JSON diagnostics to stderr; "
+            "the final result is written to stdout. Exit codes: 0 requested event, "
+            "2 error, 3 unrequested terminal state, 130 interrupted."
+        ),
     )
     parser.add_argument("target", help="full PR URL, or PR number in the current repo")
     parser.add_argument(
