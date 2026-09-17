@@ -19,9 +19,9 @@ Install via [skills.sh](https://www.skills.sh):
 npx skills@latest add aaronfc/skills
 ```
 
-## Deprecated
+## Changelog
 
-`work-mode/` has been retired and removed. Its PRD-driven workflow remains available in git history.
+See [CHANGELOG.md](CHANGELOG.md) for dated updates, including skill promotions, deprecations, and removals.
 
 ## Evaluations
 
