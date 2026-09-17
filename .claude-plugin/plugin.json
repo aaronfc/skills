@@ -1,8 +1,8 @@
 {
   "name": "aaronfc-skills",
   "skills": [
-    "./testing/pr-authoring/create",
-    "./testing/pr-authoring/screenshots",
+    "./pr-authoring/create",
+    "./pr-authoring/screenshots",
     "./testing/sharpen-skill",
     "./afk",
     "./testing/babysit-pr",
