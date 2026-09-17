@@ -7,6 +7,7 @@ My Claude Code workflow as it evolves, published so I can point at it.
 
 Right now:
 
+- **[`afk/`](afk/)** — autonomous issue implementation or research.
 - **`testing/`** — skills I am testing or experimenting with.
 - **`testing/mattpocock/`** — a vendored slice of [Matt Pocock's skills](https://github.com/mattpocock/skills).
 

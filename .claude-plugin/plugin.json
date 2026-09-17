@@ -4,7 +4,7 @@
     "./testing/pr-authoring/create",
     "./testing/pr-authoring/screenshots",
     "./testing/sharpen-skill",
-    "./testing/afk",
+    "./afk",
     "./testing/babysit-pr",
     "./testing/review-code",
     "./testing/mattpocock/grill-me",
