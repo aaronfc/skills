@@ -12,7 +12,6 @@ Right now:
 - **[`pr-authoring/screenshots/`](pr-authoring/screenshots/)** — add visual proof to pull requests.
 - **[`sharpen-skill/`](sharpen-skill/)** — simplify skills with evaluation-backed checks.
 - **`testing/`** — skills I am testing or experimenting with.
-- **`testing/mattpocock/`** — a vendored slice of [Matt Pocock's skills](https://github.com/mattpocock/skills).
 
 Install via [skills.sh](https://www.skills.sh):
 
