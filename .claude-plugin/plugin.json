@@ -3,7 +3,7 @@
   "skills": [
     "./pr-authoring/create",
     "./pr-authoring/screenshots",
-    "./testing/sharpen-skill",
+    "./sharpen-skill",
     "./afk",
     "./testing/babysit-pr",
     "./testing/review-code",

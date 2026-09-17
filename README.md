@@ -10,6 +10,7 @@ Right now:
 - **[`afk/`](afk/)** — autonomous issue implementation or research.
 - **[`pr-authoring/create/`](pr-authoring/create/)** — create or update draft pull requests.
 - **[`pr-authoring/screenshots/`](pr-authoring/screenshots/)** — add visual proof to pull requests.
+- **[`sharpen-skill/`](sharpen-skill/)** — simplify skills with evaluation-backed checks.
 - **`testing/`** — skills I am testing or experimenting with.
 - **`testing/mattpocock/`** — a vendored slice of [Matt Pocock's skills](https://github.com/mattpocock/skills).
 
