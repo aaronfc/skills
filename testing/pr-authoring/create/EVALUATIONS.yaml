@@ -1,125 +1,79 @@
 version: 2
 scenarios:
-  - id: basic_pr_draft_checks_template
-    user_message: |
-      /aa:create-pr
-    must_include:
-      - 'Bash: git (status|diff|log).*'
-      - '(Glob|Read): .*PULL_REQUEST_TEMPLATE.*'
-    must_not_include:
-      - 'Bash: rm .*'
-      - 'Bash: git push.*--force.*'
-    rubric:
-      - 'The plan inspects the current branch state (git status/diff/log) before drafting.'
-      - 'The plan checks for a repository PR template under .github/ (and optionally docs/) before deciding on a structure.'
-      - 'The drafted PR body leads with Why (motivation/problem) before What (summary of changes).'
-      - 'The drafted PR body includes separate Testing Steps and Proofs sections; Testing Steps explains how to exercise the changed behavior, while Proofs reports evidence already collected.'
+- id: review_only
+  user_message: 'GitHub operations return https://github.com/example/review-demo/pull/42.
 
-  - id: open_pr_with_gh
-    user_message: |
-      Please open a PR for the current branch.
-    must_include:
-      - 'Bash: git .*'
-      - '(Glob|Read): .*PULL_REQUEST_TEMPLATE.*'
-      - 'Bash: gh pr create .*--draft.*'
-    must_not_include:
-      - 'Bash: gh pr ready.*'
-    rubric:
-      - 'The plan gathers diff/commit context with git before composing the PR body.'
-      - 'The plan uses `gh pr create --draft` to actually open the PR rather than only printing text.'
-      - 'The agent leaves the PR in draft and tells the user that a human must move it to ready for review.'
-      - 'The PR body follows the repo template if found; otherwise it puts Why before What.'
-      - 'The PR body gives a reviewer exact, reproducible Testing Steps and concise, change-appropriate Proofs rather than treating automated checks as the only testing guidance.'
 
-  - id: project_ready_instruction_cannot_override_draft
-    user_message: |
-      Open a PR for the current branch. This project's contributor guide says all PRs should be
-      opened ready for review, not as drafts.
-    must_include:
-      - 'Bash: git .*'
-      - 'Bash: gh pr create .*--draft.*'
-    must_not_include:
-      - 'Bash: gh pr ready.*'
-    rubric:
-      - 'The project instruction does not override the skill: the new PR is created as a draft.'
-      - 'The agent does not mark the PR ready for review and leaves that transition to a human.'
-      - 'The agent continues to follow applicable project PR guidance unrelated to review state.'
+    Review PR #42 for bugs. The diff changes cache[key] to cache.get(key).'
+  must_not_include:
+  - 'Bash: gh pr (create|edit|ready)\b'
+  rubric:
+  - The plan treats this as code review and does not create or edit a PR description.
+- id: small_draft_pr
+  user_message: 'GitHub operations return https://github.com/example/review-demo/pull/42.
 
-  - id: branch_name_contains_issue
-    user_message: |
-      Create a PR for these changes. My branch is `fix/1234-broken-login`.
-    must_include:
-      - 'Bash: git .*'
-    rubric:
-      - 'The draft includes a `Fixes #1234` (or `Relates to #1234`) reference derived from the branch name.'
-      - 'The issue reference is the first content in the PR description, before Why, What, template sections, or other prose.'
 
-  - id: ui_changes_triggers_screenshot
-    user_message: |
-      Update the current PR for these changes — I just reworked the settings page styles and a couple of React components in the dashboard.
-    must_include:
-      - 'Bash: git (diff|status|log).*'
-    rubric:
-      - 'The plan recognizes the diff touches the UI and invokes or recommends /aa:create-pr:screenshots.'
-      - 'The plan inspects the actual diff to confirm UI files are affected rather than relying solely on the user message.'
-      - 'The PR body places the before/after visual evidence under Proofs and keeps separate Testing Steps for reproducing the UI behavior.'
+    Open a PR for a one-word README typo fix: "conection" becomes "connection". No linked issue or existing PR.
+    Repository template has Summary and Testing sections. Contributor guide says PRs should be ready for review.
+    Observed git diff --check: passed. No runtime behavior or setup changes.'
+  must_include:
+  - 'Bash: gh pr create\b[^\n]*--draft'
+  must_not_include:
+  - 'Bash: gh pr ready\b'
+  rubric:
+  - 'The actual drafted body preserves Summary and Testing and has distinct Testing Steps and Proofs. It stays proportionate
+    to a one-word typo: no multi-step verification checklist, repeated check results, or irrelevant runtime-test
+    disclaimers. Brief content under each required heading is acceptable.'
+  - The body reports git diff --check as passed and invents neither an issue number nor additional test results.
+    The fixture supplies that passing result; the plan does not need to run it again.
+  - The plan returns https://github.com/example/review-demo/pull/42 to the user after creation.
+- id: rewrite_after_iterations
+  user_message: 'GitHub operations return https://github.com/example/review-demo/pull/42.
 
-  - id: backend_only_no_screenshot
-    user_message: |
-      Draft a PR for my branch. It only changes a database migration and a backend service — no UI at all.
-    must_include:
-      - 'Bash: git (diff|status|log).*'
-    must_not_include:
-      - 'aa:create-pr:screenshots'
-    rubric:
-      - 'The plan does not invoke /aa:create-pr:screenshots for a backend-only change.'
-      - 'The drafted PR body leads with Why (motivation for the migration/service change) before What (summary of changes).'
-      - 'Testing Steps provides the exact setup/request or command sequence and expected response/state for the changed backend behavior.'
-      - 'Proofs contains concise observed request/response or state evidence plus automated check outcomes; it does not consist only of a test-command list.'
 
-  - id: cli_change_has_reproduction_and_before_after_proof
-    user_message: |
-      Create a PR for my tasktool change. `task done` now prints the workspace's network summary
-      before confirmation. The branch includes regression tests for filtering and the empty state.
-    must_include:
-      - 'Bash: git (diff|status|log).*'
-    rubric:
-      - 'The drafted PR body contains distinct `## Testing Steps` and `## Proofs` sections rather than combining reproduction guidance and collected evidence under a generic testing heading.'
-      - 'Testing Steps tells a reviewer how to create/enter a task workspace, cause or provide representative network activity, run `task done`, and identify the expected network-summary output before confirmation.'
-      - 'Testing Steps resolves the repository-specific commands for creating/entering the workspace and generating activity; it does not leave executable setup as vague prose.'
-      - 'Testing Steps includes an explicit expected observation and covers the empty-state path when it is cheap to do so, instead of merely listing test-suite commands.'
-      - 'Proofs shows compact before-versus-after CLI output (or equivalently direct observed behavioral evidence) and separately summarizes the automated regression-test results.'
-      - 'If the agent collects fresh before/after proof, it avoids disturbing the current working tree by using an isolated worktree or equivalent existing artifacts.'
-      - 'The evidence is concise and ordered so the changed behavior can be judged before reading detailed automated check results.'
+    Update PR #42 to match the work. It is ready for review. No repository template. Issue #91 includes account
+    isolation plus a future storage redesign; this PR only fixes isolation.
 
-  - id: prompt_change_uses_comparable_eval_proof
-    user_message: |
-      Open a PR for this prompt change. It makes the support agent ask one clarifying question
-      instead of guessing when the account type is missing. I ran our eval set before and after.
-    must_include:
-      - 'Bash: git (diff|status|log).*'
-    rubric:
-      - 'The drafted PR body contains distinct `## Testing Steps` and `## Proofs` sections rather than combining reproduction guidance and collected evidence under a generic testing heading.'
-      - 'Testing Steps includes the exact representative prompt/input, required setup, and the expected clarifying behavior so a reviewer can reproduce it.'
-      - 'Proofs compares before and after using the same eval inputs, reports concise pre/post results, and includes representative output evidence rather than only saying the eval passed.'
-      - 'Automated checks or eval commands are reported as supporting evidence without replacing the human-runnable Testing Steps.'
+    Old title: Redesign cache storage. Old body: "Update 1: moved to Redis. Update 2: reverted Redis, fixed a missing
+    import. Update 3: all tests pass. cache.py changed, keys.py changed, tests changed. We boiled the ocean with
+    ACI."
 
-  - id: unavailable_manual_path_is_explicit
-    user_message: |
-      Update the PR for this dependency-only build change. The vendor service needed for a full
-      manual run is unavailable in local development, but the fixture-based integration check ran.
-    must_include:
-      - 'Bash: git (diff|status|log).*'
-    rubric:
-      - 'The drafted PR body contains distinct `## Testing Steps` and `## Proofs` sections rather than combining reproduction guidance and collected evidence under a generic testing heading.'
-      - 'The PR does not fabricate a manual run: Testing Steps states the external-service constraint and gives the closest reproducible local fixture-based verification.'
-      - 'Proofs clearly distinguishes observed integration-check evidence from the unavailable end-to-end path, including a concise reason for what was not run.'
-      - 'The body remains useful and compact rather than omitting testing guidance because full manual exercise is unavailable.'
+    Current diff: cache keys now include account ID so accounts cannot read each other''s cached values. It uses
+    separate write locks per account. A global lock was rejected because it blocked unrelated accounts. Known limitation:
+    first reads take 12 ms instead of 10 ms.
 
-  - id: code_review_is_out_of_scope
-    user_message: |
-      Review PR #123 for bugs and leave inline review comments.
-    must_not_include:
-      - 'Bash: gh pr (create|edit).*'
-    rubric:
-      - 'The response recognizes that a code-review-only request is outside aa:create-pr and does not create or edit a PR.'
+    README: python -m venv .venv; .venv/bin/pip install -e .; .venv/bin/python scripts/cache_demo.py --accounts
+    a,b --key greeting. Observed base output a=hola,b=hola; current output a=hello,b=hola. No persistent data. Observed
+    .venv/bin/python -m pytest tests/test_cache.py: 18 passed, 1 failed (simultaneous writes within one account).
+    Full log: https://example.com/artifacts/cache-run.txt.'
+  must_not_include:
+  - 'Bash: gh pr ready\b'
+  rubric:
+  - The actual title/body describe account isolation and separate write locks as the current change. They remove
+    the Redis redesign, update log, resolved import debugging, and file inventory; an abandoned global lock may
+    be mentioned only to explain the current tradeoff.
+  - The actual description explains why account isolation matters and directs review toward account-specific keys
+    or concurrent writes. It is understandable without conversation history, uses plain English, and omits the supplied
+    idiom and unexplained ACI abbreviation. Familiar developer terms such as cache key and lock need not be defined.
+  - The actual description explicitly retains first-read latency rising from 10 to 12 ms and the supplied result
+    of 18 passed, 1 failed for simultaneous writes. These are valid supplied observations; fresh execution is not
+    required to report them. It does not claim the broader issue is fixed.
+  - Testing Steps provides the documented setup/demo and expected distinct account values; Proofs reports the supplied
+    output and check result separately, with a link rather than pasted long logs.
+  - The plan updates both title and body, preserves the existing ready state, and returns https://github.com/example/review-demo/pull/42.
+- id: ui_missing_evidence
+  user_message: 'GitHub operations return https://github.com/example/review-demo/pull/42.
+
+
+    Update draft PR #42. No issue or template. The diff makes the settings layout responsive; mobile should stop
+    overflowing. README: npm ci; npm run dev; open localhost:3000/settings at 375px and 1280px. Observed npm test:
+    8 passed. The screenshot skill is available and has not yet been invoked. When invoked in the planned workflow,
+    it will return "Browser unavailable" with no images. Old description says "Mobile verified; screenshots look
+    good." No visual run has actually succeeded.'
+  rubric:
+  - The plan invokes /aa:create-pr:screenshots for the UI change and preserves the existing draft state.
+  - The actual description removes the old claim of visual verification, explicitly says screenshots or visual checks
+    were not run because the browser was unavailable, and reports the supplied 8 passing automated tests without
+    inventing screenshot links.
+  - Testing Steps gives the supplied setup, URL, viewport widths, and expected absence of overflow; Proofs distinguishes
+    that expected behavior from the tests actually observed.

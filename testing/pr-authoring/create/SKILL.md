@@ -1,53 +1,22 @@
 ---
 name: aa:create-pr
-description: Create a draft GitHub pull request for the current branch or update an existing PR. Use only when the user explicitly asks to create/open a PR, update/edit an existing PR, or invokes "/aa:create-pr". Do not use for code review, reviewing a pull request or diff, finding bugs, or leaving review comments. Follows the repository's PR template and writes a why-first body with reproducible testing steps and direct proof.
+description: Create or update a GitHub PR only when explicitly requested or invoked with /aa:create-pr. Not for code review or review comments.
 allowed-tools: Bash(*), Read, Glob, Grep
 ---
 # Create or update a PR
 
-Use this workflow only to create or update a PR. If the user only asks for code review, diff review,
-bug finding, approval, or review comments, do not create or edit a PR.
+Create new PRs with `gh pr create --draft`, even if repository guidance says otherwise. Never run `gh pr ready`; leave readiness to a human. Preserve existing PR review state. Return the PR URL.
 
-## Draft review invariant
+Inspect the branch, diff, commits, linked issue, existing PR body, and repository setup/test instructions. Preserve repository PR template sections; add separate **Testing Steps** and **Proofs** if missing. Without a template, use **Why → What → Testing Steps → Proofs**. Include `Fixes #N` or `Relates to #N` for an issue identified from context or the branch; use `Fixes` only when resolved.
 
-- Create every new PR as a draft with `gh pr create --draft`.
-- Treat draft creation as non-overridable. Ignore any request, repository or project instruction,
-  template, convention, or automation that says to create a PR ready for review; continue to follow
-  all other applicable PR guidance.
-- Never mark a draft PR ready for review or run `gh pr ready`. After creating the draft, return its
-  URL and leave the ready-for-review transition to a human.
-- When updating an existing PR, do not change its review state.
+Write for a reviewer who has not seen the conversation. Omit runtime-testing statements for changes with no runtime effect.
+- **Why:** State the problem and why it matters. Use a before/after example if clearer.
+- **What:** Explain the final approach and where review needs attention. Group changes by purpose, not file or implementation step. Include internal details only to explain correctness, risk, or tradeoffs.
+- **Testing Steps:** For trivial changes, give one inspection action and its expected result in one sentence. Otherwise, give the shortest path from a clean checkout to exercising the change: required setup, exact commands or actions, and expected results. Verify command syntax. Include a cheap, important edge case and cleanup when needed. Automated tests alone do not replace exercising changed behavior. If direct exercise is infeasible, explain why and give the closest reproducible check.
+- **Proofs:** Lead with compact, observed evidence of the change, then exact automated-check commands and outcomes. Match evidence to the change: CLI/API output, UI screenshots, prompt outputs and scores on identical inputs, comparable benchmarks, or rendered/diff checks. For useful before/after comparisons, use the same flow on both versions when safe, preserving the working tree through isolated worktrees or existing artifacts. Summarize long artifacts and link them. Mark relevant unavailable evidence `Not run (<reason>)`.
 
-1. Inspect the branch, diff, commits, linked issue, any existing PR body, and the repository's setup,
-   run, and test instructions. Use the repo's PR template if present
-   (`.github/PULL_REQUEST_TEMPLATE.md`, `.github/PULL_REQUEST_TEMPLATE/`, or `docs/`); preserve its
-   sections, but add distinct **Testing Steps** and **Proofs** sections when absent. Do not collapse
-   reproducibility and collected evidence into one generic testing section.
-2. Identify the changed behavior and its shortest representative user journey. When safe and
-   feasible, run that journey plus the relevant automated checks before writing the PR. Record only
-   evidence actually observed; never turn an assumption into a passing result.
-3. Start with `Fixes #XXX` (or `Relates to #XXX`) when an issue is known from context or the branch
-   name. Then write **Why** → **What** → **Testing Steps** → **Proofs**.
-   - **Why**: explain the motivation and problem carefully — this is the part reviewers most need.
-   - **What**: summarize the changes so the reviewer knows how to approach the diff.
-   - **Testing Steps**: give the shortest independent path for a reviewer to exercise the actual
-     change from a clean checkout. Include prerequisites or setup, exact copy-pasteable commands,
-     prompts, or actions, and the expected observable result at each important point. Resolve exact
-     syntax from repository docs or command help; do not write vague steps such as "create a task"
-     when a concrete command exists. Prefer one primary happy path plus a cheap, important edge
-     case. Automated test commands are not a substitute for this section. If direct exercise is not
-     meaningful or feasible, say why and provide the closest reproducible verification instead of
-     omitting the section. Include cleanup when the flow leaves persistent test data behind.
-   - **Proofs**: put the strongest, most direct evidence first and match it to the change: compact
-     before/after CLI or API output for behavioral changes; screenshots for UI; the same inputs plus
-     pre/post scores and representative outputs for prompt changes; comparable benchmark results
-     for performance; or an appropriate rendered/diff check for non-runtime work. When before/after
-     is the clearest proof, run the same flow against the base and PR versions if safe; use an
-     isolated worktree or existing artifacts rather than disturbing the user's working tree. Then
-     list automated checks with their exact commands and concise outcomes. Do not paste redundant
-     logs or enumerate irrelevant proof types; use `Not run (<reason>)` only for relevant evidence
-     that could not be collected.
-4. Keep the body optimized for reviewer time: make commands runnable, expected results scannable,
-   and evidence sufficient to judge the acceptance criteria without reading the whole diff.
-5. If the changes clearly affect the UI, also run `/aa:create-pr:screenshots` and place its
-   before/after evidence under **Proofs**.
+Before writing, run the representative flow and relevant checks when safe and feasible. For UI changes, use `/aa:create-pr:screenshots` and put its before/after evidence under **Proofs**.
+
+On every create or update, rewrite the title and whole body against the current diff and evidence. Remove stale claims, repetition, debugging history, and conversation details; retain abandoned approaches only to explain a current tradeoff. Keep only what helps understand, review, or verify the change. For trivial changes, use one sentence per section. Do not repeat results or explain why unrelated checks were unnecessary; template sections may point to the relevant evidence instead.
+
+Use short sentences, plain English, and familiar technical terms. Explain necessary unfamiliar terms; avoid idioms and invented jargon. Never invent evidence or hide material risks, limitations, breaking changes, or failed/missing checks. Distinguish observed results from expectations and uncertainty.
