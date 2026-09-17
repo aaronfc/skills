@@ -11,7 +11,7 @@ Right now:
 - **[`pr-authoring/create/`](pr-authoring/create/)** — create or update draft pull requests.
 - **[`pr-authoring/screenshots/`](pr-authoring/screenshots/)** — add visual proof to pull requests.
 - **[`sharpen-skill/`](sharpen-skill/)** — simplify skills with evaluation-backed checks.
-- **`testing/`** — skills I am testing or experimenting with.
+- **`testing/`** — skills I am testing or experimenting with, including Matt Pocock's [`handoff`](testing/mattpocock/handoff/) for passing context to another agent.
 
 Install via [skills.sh](https://www.skills.sh):
 
@@ -25,7 +25,7 @@ Some skills ship with an `EVALUATIONS.yaml`. I'm using these to dogfood [unvibe]
 
 ## Changelog
 
-- **2026-09-17** — Promoted `afk`, both `pr-authoring` skills, and `sharpen-skill` to the root. Deprecated and removed `work-mode`; removed the vendored Matt Pocock skills.
+- **2026-09-17** — Promoted `afk`, both `pr-authoring` skills, and `sharpen-skill` to the root. Deprecated and removed `work-mode`; removed the vendored Matt Pocock skills except `handoff`, which was restored.
 - **2026-07-30** — Added `aa:babysit-pr` for PR monitoring.
 - **2026-07-25** — Standardized evaluation filenames as `EVALUATIONS.yaml`.
 - **2026-07-22** — Extended `aa:afk` to research issues.

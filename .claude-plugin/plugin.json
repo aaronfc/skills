@@ -6,6 +6,7 @@
     "./sharpen-skill",
     "./afk",
     "./testing/babysit-pr",
-    "./testing/review-code"
+    "./testing/review-code",
+    "./testing/mattpocock/handoff"
   ]
 }
