@@ -19,6 +19,10 @@ Install via [skills.sh](https://www.skills.sh):
 npx skills@latest add aaronfc/skills
 ```
 
+## Evaluations
+
+Some skills ship with an `EVALUATIONS.yaml`. I'm using these to dogfood [unvibe](https://github.com/aaronfc/unvibe), a framework I built for writing evaluations for skills.
+
 ## Changelog
 
 - **2026-09-17** — Promoted `afk`, both `pr-authoring` skills, and `sharpen-skill` to the root. Deprecated and removed `work-mode`; removed the vendored Matt Pocock skills.
@@ -32,7 +36,3 @@ npx skills@latest add aaronfc/skills
 - **2026-05-26** — Added `aa:afk` for autonomous issue work.
 - **2026-05-25** — Added PR authoring and screenshot skills (originally `aa:review` and `aa:review:screenshot`), plus unvibe evaluations.
 - **2026-05-14** — Initial release: `work-mode` PRD workflow, Claude Code plugin, and `testing/` with vendored Matt Pocock skills.
-
-## Evaluations
-
-Some skills ship with an `EVALUATIONS.yaml`. I'm using these to dogfood [unvibe](https://github.com/aaronfc/unvibe), a framework I built for writing evaluations for skills.
