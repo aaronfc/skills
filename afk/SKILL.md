@@ -15,10 +15,13 @@ description: Work a GitHub issue end-to-end on your own — use a supplied issue
 
 ## Implementation
 
-1. Branch off the default branch.
-2. Implement one vertical slice at a time with test-driven development: red → green, until the acceptance criteria are met.
-3. Open the PR with `/aa:create-pr` to draft the description (`Fixes #n`, why → what).
-4. Report which issue you took and the PR link.
+1. Branch off the default branch. Before editing, explain the problem with one concrete user-facing example and identify coherent commit boundaries.
+2. Implement one vertical slice at a time with test-driven development: red → green. Commit each completed piece with its relevant tests before starting the next. Use a short subject and a body explaining why the change is needed. Split by independently reviewable behavior, not file type or line count; explain material changes to the boundaries.
+3. Before publishing, inspect the base-to-head diff and full commit messages. Run `python3 <skill-dir>/scripts/check_commits.py <base-ref>` to list actual subjects and detect missing bodies. Also judge whether each commit is coherent and its message explains why; the check cannot judge that. Correct your own commits before handoff without requesting supervision; do not rewrite others' commits or published history without authorization.
+4. Open the PR with `/aa:create-pr` to draft and inspect the actual description (`Fixes #n`, why → what).
+5. Report the issue and PR link, actual commit subjects, observed validation results, and unmet requirements. Do not substitute a self-reported checklist for evidence.
+
+Explain behavior before platform internals. Start with a familiar example, define necessary unfamiliar terms, and distinguish platform conventions from choices made for this change. Keep explanations natural and technically accurate.
 
 ## Research
 
