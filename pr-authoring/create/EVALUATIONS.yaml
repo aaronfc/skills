@@ -77,3 +77,59 @@ scenarios:
     inventing screenshot links.
   - Testing Steps gives the supplied setup, URL, viewport widths, and expected absence of overflow; Proofs distinguishes
     that expected behavior from the tests actually observed.
+- id: shorten_without_losing_evidence
+  user_message: |
+    Update draft PR #42. GitHub returns https://github.com/example/project/pull/42.
+    No template. The only change rejects malformed newsletter subscriber addresses.
+    Base-to-head history has one commit: "Validate subscriber addresses", with body:
+    "Reject malformed addresses before saving subscriptions so failed deliveries do not accumulate."
+    Old body: "First we inspected five files. Then we discussed whether regex was best.
+    We tried a library, reverted it, fixed an import, and debated naming. This is important
+    because bad addresses cause failed deliveries. Invalid addresses cause delivery failures.
+    We now reject malformed addresses. All delivery behavior works perfectly."
+    README setup: python3 -m venv .venv; .venv/bin/pip install -e .
+    Demo: .venv/bin/python scripts/subscribe.py --email broken (expected: Invalid email).
+    Cheap edge case: --email reader@example.com (expected: Subscribed).
+    Demo uses an in-memory store and needs no cleanup. Both outputs were observed.
+    Observed .venv/bin/python -m unittest discover -s tests: 12 tests passed.
+    Real delivery was not tested. Show the full replacement body, not just an editing plan.
+  rubric:
+  - 'The replacement body removes investigation history and repeated rationale, and remains proportionate to one validation change; no arbitrary line or word limit is required.'
+  - 'It includes Why, What, Testing Steps, and Proofs with concrete motivation, documented setup, reproducible commands, and expected results for both malformed and valid addresses.'
+  - 'It preserves the observed demo outputs and 12 passing tests while explicitly identifying real delivery as untested; it removes the claim that all delivery works.'
+  - 'Before publishing, the plan inspects actual commits and the complete replacement body and corrects defects without asking the user to edit or supervise.'
+
+- id: explain_sender_name_to_newcomer
+  user_message: |
+    Create a draft PR. GitHub returns https://github.com/example/project/pull/43.
+    No template. The reviewer understands email but has never used WordPress.
+    Change: after editing the sender name in settings, the next email uses that name
+    without restarting the plugin. Previously the plugin read the setting at startup.
+    Technical facts: a WordPress filter lets plugin code change a value before WordPress
+    uses it. wp_mail_from_name is the platform's sender-name filter. Using this filter
+    is conventional; reading the setting inside its callback is our design choice.
+    Test procedure: change sender name to News in settings, send a preview, and inspect
+    its From name. Expected: News. Observed: News. Observed command
+    python3 -m unittest discover -s tests: 3 tests passed. Real delivery was not tested.
+    Show the actual description. Keep necessary technical precision and a natural tone.
+  rubric:
+  - 'The description starts with the settings change and next-email example before platform internals.'
+  - 'Any use of filter or callback is explained in familiar language; the description separates WordPress convention from the choice to read the setting each time.'
+  - 'It keeps the preview procedure, observed result, test command and result, and untested real delivery, without inventing setup or claiming delivery verification.'
+  - 'It uses connected, natural prose and consistent terminology without claiming compliance with ASD-STE100 or imposing its controlled vocabulary.'
+- id: compare_ste_inspired_explanation
+  user_message: |
+    Explore wording for this PR before publishing; do not adopt a language standard.
+    Facts: changing the newsletter sender name now affects the next email without a
+    restart. A WordPress filter lets plugin code change a value before WordPress uses
+    it. The standard sender-name filter is wp_mail_from_name; reading the saved setting
+    inside that filter on each email is our design choice. Preview showed the new name;
+    real delivery was not tested. The reader understands email but not WordPress.
+    Write two short explanations of these same facts: ordinary plain English, then
+    an experimental version inspired by ASD-STE100 principles of active voice, one
+    topic per sentence, and consistent technical names. Compare clarity, accuracy,
+    and natural tone. Treat this as a writing experiment, not a compliance check.
+  rubric:
+  - 'Both actual versions lead with the next-email behavior, explain filter, distinguish convention from design choice, and preserve the preview-only evidence and untested delivery.'
+  - 'The comparison cites concrete wording from both versions and assesses clarity, technical accuracy, and natural tone rather than asserting that the named standard is better.'
+  - 'The recommendation is qualified as a judgment about this sample, not observed reader comprehension or standards compliance; it does not impose a controlled vocabulary on future PRs.'
