@@ -124,3 +124,36 @@ scenarios:
       - 'The follow-up findings are appended as a new comment instead of editing or replacing the earlier report.'
       - 'The follow-up report includes inspectable proof for the new experiment.'
       - 'The issue remains open and is handed back with ready-for-human after the new report is posted.'
+
+  - id: coherent_commits_before_handoff
+    user_message: |
+      /aa:afk https://github.com/example/project/issues/42
+      The complete issue thread requests two independent changes to a newsletter app:
+      reject malformed subscriber addresses, and add an unsubscribe link to emails.
+      No comments or dependencies. Default branch main, clean checkout, no PR template.
+      Existing tests cover subscription validation and rendered email links.
+      Show the concrete opening explanation, intended commit boundaries, commit commands
+      with full messages, and final verification commands in your planned workflow.
+    rubric:
+      - 'Before implementation, the response explains a concrete user-visible failure and identifies coherent commit boundaries.'
+      - 'Address validation and unsubscribe behavior are separate reviewable pieces, each committed with its relevant tests after red/green validation and before starting the next piece; commit count alone earns no credit.'
+      - 'Actual planned commit messages have a subject and a body explaining the reason or consequence, not just a file list.'
+      - 'Before publishing, the plan inspects the actual base-to-head commit history and diff, detects missing commit bodies, and corrects its own deficiencies without asking the user to supervise.'
+      - 'The handoff reports actual commit subjects and validation outcomes or explicitly states that they are not yet observed; a compliance checklist or invented passing output earns no credit.'
+
+  - id: explain_to_platform_newcomer
+    user_message: |
+      /aa:afk https://github.com/example/project/issues/43
+      The complete issue thread asks to fix a WordPress newsletter plugin: changing
+      the sender name in settings must affect the next email. The plugin currently
+      reads the saved name only at startup. No comments, dependencies, or ambiguity.
+      I understand email but have never used WordPress. Explain the fix in your handoff.
+      Technical facts: a WordPress filter lets plugin code change a value before WordPress
+      uses it; wp_mail_from_name is the sender-name filter. Using that filter is the
+      platform convention. Reading the saved setting inside its callback is our design
+      choice. The regression test passed; delivery through a real mail server was not tested.
+    rubric:
+      - 'The actual explanation starts with changing the sender name and the next email, before introducing WordPress internals.'
+      - 'It defines filter in familiar language if used and distinguishes the platform convention from the choice to read the saved setting on each email.'
+      - 'It retains the passing regression test and untested real delivery, without implying that mail delivery was verified.'
+      - 'The explanation uses natural connected prose, consistent terms, and accurate causality rather than jargon or mechanical fragments.'
