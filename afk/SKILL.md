@@ -34,7 +34,8 @@ Explain behavior before platform internals. Start with a familiar example, defin
    - Never present an inference or recommendation as an observed fact.
 3. Write a self-contained Markdown report that clearly separates observed facts and their evidence from inferences, recommendations, and uncertainty. Prefer **Conclusion**, **Findings and evidence**, **Recommendation or next steps**, and **Open questions or uncertainty**, but adapt, rename, or omit sections when another structure preserves that separation more clearly.
 4. Append the report as a new issue comment; never replace a previous research comment. `gh issue comment` cannot upload attachments: keep details in one or more comments and link existing sources when useful.
-5. After all report comments succeed, remove `ready-for-agent`, add `ready-for-human` (create the label first if missing, following repository conventions), and leave the issue open. Only a human closes a research issue or makes it ready for another automatic pass.
+5. After all report comments succeed, remove `ready-for-agent`, add `needs-human` (if label exists) and leave the issue open. Only a human closes a research issue or makes it ready for another automatic pass.
 6. Report which issue you researched and link the new comment.
 
 Work the whole thing without checking in, unless the issue is ambiguous or you hit a real blocker — then stop and ask.
+On these rare occasions add `needs-human` label (if label exists).
