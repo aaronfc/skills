@@ -8,7 +8,7 @@ scenarios:
       checks with python -m unittest tests.test_cache and prepare a handoff.
       I have not invoked any review skill.
     rubric:
-      - 'The agent does not activate aa:review-code or start its four review lanes merely because implementation or handoff is requested.'
+      - 'The agent does not activate aa:review-code or start its five review lanes merely because implementation or handoff is requested.'
       - 'The agent continues the requested implementation and checks; the skill activation guard does not stop the user task.'
 
   - id: ordinary_review_does_not_activate
@@ -27,7 +27,7 @@ scenarios:
       Do not edit anything.
     rubric:
       - 'The agent reads repository instructions, status, the full staged and unstaged diff, the relevant untracked helper, and surrounding code.'
-      - 'The agent delegates independent changed-line security, system security, consistency, and simplicity passes concurrently and waits for all four.'
+      - 'The agent delegates independent correctness, changed-line security, system security, consistency, and simplicity passes, uses available slots concurrently, and waits for all five.'
       - 'Each reviewer receives the raw scope and repository access without conclusions from other reviewers.'
       - 'The agent verifies and deduplicates candidate findings before reporting; it makes no edits or commits and does not post a review.'
 
@@ -62,7 +62,7 @@ scenarios:
       vulnerability exists in a separate unused legacy module, unchanged and not
       reachable from count_accounts. Another reviewer prefers the old local name.
     rubric:
-      - 'The agent completes all four independent lanes and verifies candidates against the supplied scope.'
+      - 'The agent completes all five independent lanes and verifies candidates against the supplied scope.'
       - 'The agent discards the unrelated legacy vulnerability and naming preference, and reports No findings. without invented risks or fixes.'
 
   - id: plain_technical_report
@@ -90,7 +90,7 @@ scenarios:
       valid addresses with HTTP 201. The app uses an in-memory store. No server is
       running yet. Do not edit source files.
     rubric:
-      - 'The agent retains the four independent review lanes and uses the existing local environment for verification before the final report.'
+      - 'The agent retains the five independent review lanes and uses the existing local environment for verification before the final report.'
       - 'The plan runs the relevant pytest command, starts the documented dev server, and exercises both malformed and valid email requests with the expected HTTP status checks.'
       - 'The agent stops the server it started and does not edit source files.'
       - 'The final report includes a brief verification summary and does not claim checks passed before observing their results.'
@@ -105,3 +105,18 @@ scenarios:
     rubric:
       - 'The agent completes the code review and runs the available unit tests without trying to install or configure the database.'
       - 'The report distinguishes unit test results from the unavailable integration and local dev checks; it does not claim the changed behavior was verified locally.'
+
+  - id: correctness_checks_intent_beyond_tests
+    user_message: |
+      /aa:review-code
+      Review this complete supplied fixture; no repository access is needed.
+      Four subagent slots are available. The request is to treat only None as a
+      cache miss; cached 0, False, and empty strings must remain valid hits.
+      Before: get_cached returns fetch() if not cached else cached.
+      After, src/cache.py line 18: get_cached returns fetch() if cached is None
+      or cached == 0 else cached. The new tests cover None and a positive integer
+      and pass. fetch() makes an external request instead of returning the cache.
+    rubric:
+      - 'An independent correctness reviewer establishes the requested cache semantics and traces the implementation against them, rather than accepting passing tests as proof.'
+      - 'The agent identifies that cached 0 and False still trigger fetch(), cites src/cache.py:18, and proposes removing the cached == 0 condition.'
+      - 'The correctness lane uses the strongest available reasoning model when selectable; all five lanes complete even when concurrency is limited.'
