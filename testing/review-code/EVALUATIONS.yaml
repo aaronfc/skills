@@ -1,0 +1,77 @@
+version: 1
+scenarios:
+  - id: implementation_does_not_activate
+    user_message: |
+      Implement the requested cache fix, run the relevant checks, and prepare a handoff.
+      I have not invoked any review skill.
+    rubric:
+      - 'The agent does not activate aa:review-code or start its four review lanes merely because implementation or handoff is requested.'
+      - 'The agent continues the requested implementation and checks; the skill activation guard does not stop the user task.'
+
+  - id: ordinary_review_does_not_activate
+    user_message: |
+      Review the current diff for bugs. I have not invoked /aa:review-code;
+      use your normal review process.
+    rubric:
+      - 'The agent performs the requested ordinary review without activating aa:review-code or treating the quoted command as an invocation.'
+      - 'The agent does not refuse the user task because this skill is explicit-only.'
+
+  - id: explicit_review_runs_all_lanes_read_only
+    user_message: |
+      /aa:review-code
+      Review the current working tree. There are staged and unstaged changes and
+      an untracked helper used by the change. Four subagent slots are available.
+      Do not edit anything.
+    rubric:
+      - 'The agent reads repository instructions, status, the full staged and unstaged diff, the relevant untracked helper, and surrounding code.'
+      - 'The agent delegates independent changed-line security, system security, consistency, and simplicity passes concurrently and waits for all four.'
+      - 'Each reviewer receives the raw scope and repository access without conclusions from other reviewers.'
+      - 'The agent verifies and deduplicates candidate findings before reporting; it makes no edits or commits and does not post a review.'
+
+  - id: distinguish_existing_comments_from_new_findings
+    user_message: |
+      /aa:review-code
+      Review these supplied artifacts; no repository access is needed for this fixture.
+      Four subagent slots are available. Changed src/routes.py:
+      10: def download(request):
+      11:     return read_file(ROOT / request.query["path"])
+      20: def remove(request, document_id):
+      21:     db.delete_document(document_id)
+      The diff adds both handlers. ROOT is a directory path. read_file opens the
+      supplied path without checking containment. These routes require login but
+      have no other middleware. db.delete_document deletes by ID without checking
+      ownership. Documents belong to individual users and IDs are visible in shared URLs.
+      Existing human review comment on line 11: "../ permits reads outside ROOT."
+      Existing AI review comment on line 21: "SQL injection through document_id."
+      Database evidence: delete_document uses a parameterized SQL statement.
+    rubric:
+      - 'The report separates the verified path traversal already reported by the human from the new missing document ownership check.'
+      - 'The agent rejects the SQL injection claim based on parameterized SQL instead of repeating it as a confirmed existing finding.'
+      - 'Findings include P0-P3 priority, exact file and line, concrete failure path, and the smallest safe correction; no changes or external replies are made.'
+
+  - id: reject_unproven_candidates
+    user_message: |
+      /aa:review-code
+      Review this complete supplied fixture; no repository access is needed.
+      Four subagent slots are available. The only change renames a local variable
+      from result to account_count in count_accounts; all references are updated.
+      The returned value and all control flow are unchanged. A SQL interpolation
+      vulnerability exists in a separate unused legacy module, unchanged and not
+      reachable from count_accounts. Another reviewer prefers the old local name.
+    rubric:
+      - 'The agent completes all four independent lanes and verifies candidates against the supplied scope.'
+      - 'The agent discards the unrelated legacy vulnerability and naming preference, and reports No findings. without invented risks or fixes.'
+
+  - id: plain_technical_report
+    user_message: |
+      /aa:review-code
+      Review this complete supplied fixture; no repository access is needed.
+      Four subagent slots are available. There are no existing review comments.
+      Changed src/cache.py line 18 stores private account responses under cache[path].
+      The new code serves this cache to all logged-in accounts. Previously responses
+      were not cached. Accounts A and B can request the same path but must receive
+      their own private data. There is no account check when reading the cache.
+    rubric:
+      - 'The report identifies the cross-account data exposure with priority, src/cache.py:18, the concrete A-writes/B-reads failure path, and a minimal account-scoped key correction for both reads and writes.'
+      - 'The report follows the requested ASD-STE100 direction through short, direct sentences, active voice, and consistent technical terms while preserving the security evidence.'
+      - 'The report contains findings only; it adds no review-process narrative, language-standard commentary, or unsupported claim of formal ASD-STE100 compliance.'
