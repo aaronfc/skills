@@ -20,6 +20,8 @@ When selectable, use the strongest available reasoning model for both security l
 
 ## Verify and report
 
+Use the project's existing local dev environment, when available, to run relevant tests and exercise the changed behavior. Follow repository setup instructions and keep checks proportional to the change. If the environment is unavailable, continue the code review and report what could not be tested. Stop any services you start.
+
 Independently verify every candidate against the code and intended behavior. Keep only issues connected to the change by a demonstrable failure or security path; discard speculation, preferences, broad redesigns, and pre-existing problems the change does not expose. Deduplicate overlapping findings and prefer the narrowest proven correction.
 
-Report findings only, ordered by severity. For each, give a P0–P3 priority, exact file and line, concise failure path, and smallest safe fix. If none survive verification, say `No findings.` Mention a validation gap only when it materially limits confidence.
+Report findings ordered by severity, followed by a brief verification summary with checks run, results, and material gaps. For each finding, give a P0–P3 priority, exact file and line, concise failure path, and smallest safe fix. If none survive verification, say `No findings.`

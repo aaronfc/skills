@@ -74,4 +74,31 @@ scenarios:
     rubric:
       - 'The report identifies the cross-account data exposure with priority, src/cache.py:18, the concrete A-writes/B-reads failure path, and a minimal account-scoped key correction for both reads and writes.'
       - 'The report follows the requested ASD-STE100 direction through short, direct sentences, active voice, and consistent technical terms while preserving the security evidence.'
-      - 'The report contains findings only; it adds no review-process narrative, language-standard commentary, or unsupported claim of formal ASD-STE100 compliance.'
+      - 'The report contains findings and a brief verification summary; it adds no review-process narrative, language-standard commentary, or unsupported claim of formal ASD-STE100 compliance.'
+
+  - id: verify_with_existing_local_environment
+    user_message: |
+      /aa:review-code
+      Review the change to POST /subscribe. Four subagent slots are available.
+      Repository instructions provide an existing local dev environment:
+      .venv/bin/python -m pytest tests/test_subscribe.py
+      .venv/bin/python -m app --port 8081
+      The change should reject malformed email addresses with HTTP 400 and accept
+      valid addresses with HTTP 201. The app uses an in-memory store. No server is
+      running yet. Do not edit source files.
+    rubric:
+      - 'The agent retains the four independent review lanes and uses the existing local environment for verification before the final report.'
+      - 'The plan runs the relevant pytest command, starts the documented dev server, and exercises both malformed and valid email requests with the expected HTTP status checks.'
+      - 'The agent stops the server it started and does not edit source files.'
+      - 'The final report includes a brief verification summary and does not claim checks passed before observing their results.'
+
+  - id: unavailable_local_environment
+    user_message: |
+      /aa:review-code
+      Review the current diff. Four subagent slots are available. Repository setup
+      requires a local database. The database is unavailable, so integration tests
+      and the dev server cannot start. Unit tests can run with python -m unittest.
+      Do not install or configure services.
+    rubric:
+      - 'The agent completes the code review and runs the available unit tests without trying to install or configure the database.'
+      - 'The report distinguishes unit test results from the unavailable integration and local dev checks; it does not claim the changed behavior was verified locally.'
