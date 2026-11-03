@@ -8,7 +8,7 @@ scenarios:
       checks with python -m unittest tests.test_cache and prepare a handoff.
       I have not invoked any review skill.
     rubric:
-      - 'The agent does not activate aa:review-code or start its five review lanes merely because implementation or handoff is requested.'
+      - 'The agent does not activate aa:review-code or start its four review lanes merely because implementation or handoff is requested.'
       - 'The agent continues the requested implementation and checks; the skill activation guard does not stop the user task.'
 
   - id: ordinary_review_does_not_activate
@@ -27,7 +27,7 @@ scenarios:
       Do not edit anything.
     rubric:
       - 'The agent reads repository instructions, status, the full staged and unstaged diff, the relevant untracked helper, and surrounding code.'
-      - 'The agent delegates independent correctness, changed-line security, system security, consistency, and simplicity passes, uses available slots concurrently, and waits for all five.'
+      - 'The agent delegates independent changed-line security, system security, consistency, and simplicity passes, uses available slots concurrently, and waits for all four.'
       - 'Each reviewer receives the raw scope and repository access without conclusions from other reviewers.'
       - 'The agent verifies and deduplicates candidate findings before reporting; it makes no edits or commits and does not post a review.'
 
@@ -62,7 +62,7 @@ scenarios:
       vulnerability exists in a separate unused legacy module, unchanged and not
       reachable from count_accounts. Another reviewer prefers the old local name.
     rubric:
-      - 'The agent completes all five independent lanes and verifies candidates against the supplied scope.'
+      - 'The agent completes all four independent lanes and verifies candidates against the supplied scope.'
       - 'The agent discards the unrelated legacy vulnerability and naming preference, and reports No findings. without invented risks or fixes.'
 
   - id: plain_technical_report
@@ -90,8 +90,8 @@ scenarios:
       valid addresses with HTTP 201. The app uses an in-memory store. No server is
       running yet. Do not edit source files.
     rubric:
-      - 'The agent retains the five independent review lanes and uses the existing local environment for verification before the final report.'
-      - 'The plan runs the relevant pytest command, starts the documented dev server, and exercises both malformed and valid email requests with the expected HTTP status checks.'
+      - 'The agent retains the four independent review lanes and uses the existing local environment for verification before the final report.'
+      - 'The main agent itself runs the relevant pytest command, starts the documented dev server, and exercises both malformed and valid email requests with the expected HTTP status checks; it does not stop at a plan or rely only on subagent reports.'
       - 'The agent stops the server it started and does not edit source files.'
       - 'The final report includes a brief verification summary and does not claim checks passed before observing their results.'
 
@@ -117,6 +117,20 @@ scenarios:
       or cached == 0 else cached. The new tests cover None and a positive integer
       and pass. fetch() makes an external request instead of returning the cache.
     rubric:
-      - 'An independent correctness reviewer establishes the requested cache semantics and traces the implementation against them, rather than accepting passing tests as proof.'
+      - 'The main agent itself establishes the requested cache semantics and traces the implementation against them, rather than accepting passing tests as proof.'
       - 'The agent identifies that cached 0 and False still trigger fetch(), cites src/cache.py:18, and proposes removing the cached == 0 condition.'
-      - 'The correctness lane uses the strongest available reasoning model when selectable; all five lanes complete even when concurrency is limited.'
+      - 'The main agent owns the correctness review, uses the strongest available reasoning model when selectable, and completes the four specialist lanes without delegating correctness to a fifth lane.'
+
+  - id: main_agent_verifies_lane_findings
+    user_message: |
+      /aa:review-code
+      Review the current checkout. The goal is to accept zero as a valid cached
+      value. The existing local environment can run the cache tests and a direct
+      call to get_cached. A specialist lane reports that zero triggers fetch(),
+      but cites a truthiness check in an unrelated unchanged helper. The changed
+      get_cached implementation uses cached is None and returns zero correctly.
+      Do not edit files.
+    rubric:
+      - 'The main agent reads the changed implementation and checks it against the requested behavior itself.'
+      - 'The main agent runs the available cache tests and directly checks zero as a valid hit instead of accepting the specialist report.'
+      - 'The agent rejects the unsupported lane finding and reports the observed verification results without editing files.'
