@@ -5,6 +5,8 @@ description: Pre-review generated or changed code before handoff, commit, or pul
 
 # Review Code
 
+If the user did not explicitly invoke `/aa:review-code`, do not apply this skill; continue the user's task normally.
+
 Review only; do not edit unless asked. Read the request, repository instructions, status, full diff, relevant untracked files, and enough surrounding code to understand the change.
 
 ## Run independent passes

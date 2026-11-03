@@ -2,7 +2,10 @@ version: 1
 scenarios:
   - id: implementation_does_not_activate
     user_message: |
-      Implement the requested cache fix, run the relevant checks, and prepare a handoff.
+      Fix src/cache.py: get_cached currently treats a cached value of 0 as a cache
+      miss because it tests truthiness. Treat only None as a miss; 0 is a valid hit.
+      The checkout and existing local environment are available. Run the relevant
+      checks with python -m unittest tests.test_cache and prepare a handoff.
       I have not invoked any review skill.
     rubric:
       - 'The agent does not activate aa:review-code or start its four review lanes merely because implementation or handoff is requested.'
