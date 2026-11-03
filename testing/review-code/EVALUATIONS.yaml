@@ -77,7 +77,7 @@ scenarios:
     rubric:
       - 'The report identifies the cross-account data exposure with priority, src/cache.py:18, the concrete A-writes/B-reads failure path, and a minimal account-scoped key correction for both reads and writes.'
       - 'The report follows the requested ASD-STE100 direction through short, direct sentences, active voice, and consistent technical terms while preserving the security evidence.'
-      - 'The report contains findings and a brief verification summary; it adds no review-process narrative, language-standard commentary, or unsupported claim of formal ASD-STE100 compliance.'
+      - 'The final report contains findings and a brief verification summary. It omits descriptions of lane execution or model selection and commentary or compliance claims about ASD-STE100. Finding provenance and verification limits are allowed; progress updates before the final report are outside this claim.'
 
   - id: verify_with_existing_local_environment
     user_message: |
@@ -104,12 +104,13 @@ scenarios:
       Do not install or configure services.
     rubric:
       - 'The agent completes the code review and runs the available unit tests without trying to install or configure the database.'
-      - 'The report distinguishes unit test results from the unavailable integration and local dev checks; it does not claim the changed behavior was verified locally.'
+      - 'The report distinguishes available unit-level verification from blocked database integration and dev-server checks; it does not claim those blocked checks passed or that unit tests prove the full integrated behavior.'
 
   - id: correctness_checks_intent_beyond_tests
     user_message: |
       /aa:review-code
       Review this complete supplied fixture; no repository access is needed.
+      The main agent already uses the strongest available reasoning model.
       Four subagent slots are available. The request is to treat only None as a
       cache miss; cached 0, False, and empty strings must remain valid hits.
       Before: get_cached returns fetch() if not cached else cached.
@@ -119,7 +120,7 @@ scenarios:
     rubric:
       - 'The main agent itself establishes the requested cache semantics and traces the implementation against them, rather than accepting passing tests as proof.'
       - 'The agent identifies that cached 0 and False still trigger fetch(), cites src/cache.py:18, and proposes removing the cached == 0 condition.'
-      - 'The main agent owns the correctness review, uses the strongest available reasoning model when selectable, and completes the four specialist lanes without delegating correctness to a fifth lane.'
+      - 'The main agent retains responsibility for correctness and completes the four specialist lanes without delegating correctness to a fifth lane.'
 
   - id: main_agent_verifies_lane_findings
     user_message: |
