@@ -2,18 +2,19 @@ version: 1
 scenarios:
   - id: choose_ready_work
     user_message: |
-      Pick a ready issue while I'm away. #8 is a one-line fix waiting on #7.
-      #9 is a typo and #10 is a settings redesign. Both are unblocked.
+      Pick a ready issue while I'm away. The queue has two typos and a redesign.
+      The latest comment on issue 8 blocks its typo on issue 7. The threads
+      for issues 9 (typo) and 10 (redesign) confirm both can start.
     rubric:
       - Reads the open ready-for-agent candidates and their full threads before choosing.
-      - Picks #9 as the smallest unblocked issue.
+      - Picks issue 9 as the smallest unblocked issue.
 
   - id: implement_in_slices
     user_message: |
       /aa:afk 42. Subscribers can save a malformed address and emails lack an
       unsubscribe link. The issue asks for both fixes. Take it through to a PR.
     rubric:
-      - Uses #42 directly, reads its comments, and branches from the default branch.
+      - Uses issue 42 directly, reads its comments, and branches from the default branch.
       - Explains the subscriber impact and commits each fix with its own red-to-green tests and a reason in the commit body.
       - Checks the diff and runs check_commits.py before opening the PR with aa:create-pr.
       - Links the PR and issue and reports commit subjects and observed checks.
@@ -25,11 +26,12 @@ scenarios:
     rubric:
       - Reads the whole thread and investigates the new question without changing the checkout.
       - Appends a new comment with reproducible inputs and observed results for both parsers.
-      - After posting, removes ready-for-agent, adds needs-human, leaves #17 open, and links the new comment.
+      - After posting, removes ready-for-agent, adds needs-human, leaves issue 17 open, and links the new comment.
 
   - id: unclear_deliverable
     user_message: |
       /aa:afk 18. The whole issue says "revisit subscriptions." There are no comments.
+      This repo has a needs-human label.
     rubric:
       - Asks what outcome is wanted before implementing or researching.
-      - Marks the blocker with needs-human if the label exists.
+      - Adds the available needs-human label to issue 18.
