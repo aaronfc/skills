@@ -35,3 +35,9 @@ The main agent must independently verify every candidate from its own review and
 Take into account existing comments from other reviewers (human or ai assistants). Separate already reported things from new findings from our own.
 
 Deduplicate verified findings from all reviewers and report each issue once, ordered by severity, followed by a brief verification summary with checks run, results, and material gaps. Keep the final report to findings and verification evidence; omit review-process narrative and commentary about the language standard. For each finding, give a P0–P3 priority, exact file and line, concise failure path, and smallest safe fix. If none survive verification, say `No findings.` Use Simplified Technical English (ASD-STE100) in your report.
+
+## Follow up on a posted PR review
+
+When findings have been posted on a colleague's PR, offer to track replies and fixes. If the user already requested follow-up, start it using the workspace watch instructions or the babysit-pr skill. Carry forward the reviewed head SHA and finding links. A draft review stays a draft until the user authorizes publication.
+
+For each reply or new revision, compare the current code with the original finding and report which findings are fixed, answered, or still open. Link the relevant thread and commit. Keep follow-up read-only unless the user requests an action.
