@@ -1,90 +1,24 @@
 version: 1
 scenarios:
-  - id: basic_ui_pr_screenshots
+  - id: compare_settings
     user_message: |
-      /aa:create-pr:screenshots
-
-      I just pushed a PR that restyles the login form. Can you capture the screenshots and add them to the PR body?
-    must_include:
-      - 'Bash: gh '
-      - '1354'
-      - '896'
-      - '390'
-      - '844'
-    must_not_include:
-      - 'Bash: git add .*\.(png|jpe?g|gif|webp)'
-      - 'Bash: git commit.*\.(png|jpe?g|gif|webp)'
-      - 'Bash: git push.*screenshot'
+      Add before and after screenshots of the settings page to PR 42.
+      It requires login. Keep the existing description.
     rubric:
-      - 'The plan captures with Playwright (an isolated/headless browser via the mcp__playwright__* tools), not the Chrome integration, and relies on screenshots being written straight to disk (browser_take_screenshot returns a file path) rather than a download/GIF workaround.'
-      - 'The plan captures four shots per screen: before/after crossed with desktop and mobile viewports.'
-      - 'The plan uses the exact viewport sizes 1354x896 for desktop and 390x844 for mobile (via browser_resize).'
-      - 'The plan hosts screenshots on a secret gist rather than committing binaries to the branch.'
-      - 'The plan updates the PR body via the gh CLI with a side-by-side Before | After markdown table per viewport.'
-      - 'The plan names files following the <screen>-<viewport>-<state> convention.'
+      - Signs in or restores a saved session in Playwright, then captures the same settings state on both revisions.
+      - Saves desktop (1354×896) and mobile (390×844) PNGs to absolute paths outside the repository.
+      - Uses publish-pr-media.sh and adds its pinned raw links in a Before | After table for each viewport, preserving the PR text.
 
-  - id: authenticated_state
+  - id: show_the_motion
     user_message: |
-      /aa:create-pr:screenshots
-
-      The PR restyles the wp-admin settings screen, which is behind a login. Capture before/after and add them to the PR.
-    must_include:
-      - 'Bash: gh '
+      PR 43 slows the drawer animation. Can you show the new timing in the PR?
     rubric:
-      - 'The plan recognizes that the isolated Playwright browser starts logged-out and must authenticate before reaching the screen.'
-      - 'The plan logs in programmatically (navigate to the login page and fill credentials) and/or reuses a saved session via browser_storage_state / browser_set_storage_state, rather than assuming an already-logged-in real browser.'
-      - 'The plan still hosts on a secret gist and writes a side-by-side Before | After table in the PR body.'
+      - Records the drawer opening in Playwright and attaches the video or a GIF without committing the media.
 
-  - id: animated_behavior_change
+  - id: preserve_the_conversation
     user_message: |
-      /aa:create-pr:screenshots
-
-      This PR changes the dropdown open/close animation timing. Please attach proof to the PR.
-    must_include:
-      - 'Bash: gh '
-    must_not_include:
-      - 'Bash: git add .*\.(png|jpe?g|gif|webp|mp4)'
+      PR 44 restyles a chat card that is hard to trigger twice. The conversation
+      survives a reload. Show the docked layout, which only appears at 1500px.
     rubric:
-      - 'The plan recognizes that an animated/behavioural change should be captured as motion (a recording via browser_start_video/browser_stop_video, or a GIF) instead of two static stills.'
-      - 'The plan attaches the recording to the PR (e.g. hosts a GIF on a per-PR secret gist, or attaches the video), and does not commit the media to the branch or main.'
-
-  - id: links_survive_force_push
-    user_message: |
-      /aa:create-pr:screenshots
-
-      The header redesign PR is ready — please add screenshots. I want the image links to keep working even if I force-push later.
-    must_include:
-      - 'Bash: gh '
-    rubric:
-      - 'The plan links the raw gist URL, which is independent of the PR repo (so force-pushing the branch cannot break it), and pins it to the gist revision SHA (…/raw/<revisionsha>/…) so the link stays stable even if the gist is later edited.'
-      - 'The plan does NOT rely on committing the image to the repo or on a repo commit SHA for the link (a raw.githubusercontent.com URL would not render in a private-repo PR).'
-      - 'The plan uploads to a secret gist (not a public one or the repo itself).'
-      - 'The plan writes a side-by-side Before | After table in the PR body, one pair per viewport.'
-
-  - id: multiple_screens_pairing
-    user_message: |
-      /aa:create-pr:screenshots
-
-      This PR touches three screens: the dashboard, the settings page, and the profile modal. Please document all of them visually.
-    must_include:
-      - 'Bash: gh '
-      - '1354'
-      - '390'
-    rubric:
-      - 'The plan captures 4 shots per screen (before/after x desktop/mobile) for each of the three screens.'
-      - 'The plan organizes the PR body with one Before | After table per viewport, grouped per screen.'
-      - 'The filenames follow the <screen>-<viewport>-<state>.<ext> pattern for every shot.'
-
-  - id: updates_pr_body_via_gh
-    user_message: |
-      /aa:create-pr:screenshots
-
-      Screenshots are captured already — just put them into the PR description with the standard layout.
-    must_include:
-      - 'Bash: gh pr '
-    must_not_include:
-      - 'Bash: git commit'
-    rubric:
-      - 'The plan updates the PR body through the gh CLI rather than editing files in the repo.'
-      - 'The PR body contains side-by-side Before | After markdown tables, one per viewport.'
-      - 'Image references point at raw gist URLs, not local paths.'
+      - Reuses the saved conversation across a verified bundle swap so both captures show the same card at 1500px.
+      - Restores the PR bundle after capturing the old version.
