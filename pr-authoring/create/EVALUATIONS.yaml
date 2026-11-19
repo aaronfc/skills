@@ -1,135 +1,53 @@
-version: 2
+version: 1
 scenarios:
-- id: review_only
-  user_message: 'GitHub operations return https://github.com/example/review-demo/pull/42.
+  - id: review_only
+    user_message: Review PR 42 for bugs.
+    rubric:
+      - Treats this as review work and leaves the PR title, description, and readiness alone.
 
+  - id: small_draft
+    user_message: |
+      Open the first PR for this branch. It fixes "conection" in the README.
+      Our template has Summary and Testing, and the guide asks for ready PRs.
+      git diff --check passed. GitHub returns https://github.com/example/docs/pull/7.
+    must_include:
+      - 'gh pr create\b[^\n]*--draft\b'
+    rubric:
+      - Returns the new PR link to the user.
+      - Keeps both template sections and adds separate Testing Steps and Proofs.
+      - Gives one way to inspect the corrected word and reports the observed check once.
 
-    Review PR #42 for bugs. The diff changes cache[key] to cache.get(key).'
-  must_not_include:
-  - 'Bash: gh pr (create|edit|ready)\b'
-  rubric:
-  - The plan treats this as code review and does not create or edit a PR description.
-- id: small_draft_pr
-  user_message: 'GitHub operations return https://github.com/example/review-demo/pull/42.
+  - id: update_the_evidence
+    user_message: |
+      Update ready PR 42. The old title and body promise Redis. The final diff
+      only adds account IDs to cache keys, one part of issue 91. No PR template.
+      Run ./demo with two accounts. It showed A=hello B=hello before and
+      A=hello B=hola after. pytest tests/cache reported one concurrent-write failure.
+      Show the replacement title and body.
+    rubric:
+      - Rewrites the title and body around the two accounts' results and links issue 91 as related.
+      - Gives the demo and expected result under Testing Steps, then the observed outputs and failed check under Proofs.
+      - Checks the branch commits and preserves the existing ready state.
 
+  - id: missing_ui_proof
+    user_message: |
+      Update draft PR 43 for the mobile settings fix. The old body says the page
+      fits at 375px. No one has tried the screenshot helper yet. When called,
+      it will return "browser unavailable." npm test reported 8 passed.
+      Show the updated Proofs section.
+    rubric:
+      - Calls aa:create-pr:screenshots for visual evidence.
+      - The updated Proofs section gives the browser error in place of the visual claim.
+      - The same section reports 8 passing tests.
 
-    Open a PR for a one-word README typo fix: "conection" becomes "connection". No linked issue or existing PR.
-    Repository template has Summary and Testing sections. Contributor guide says PRs should be ready for review.
-    Observed git diff --check: passed. No runtime behavior or setup changes.'
-  must_include:
-  - 'Bash: gh pr create\b[^\n]*--draft'
-  must_not_include:
-  - 'Bash: gh pr ready\b'
-  rubric:
-  - 'The actual drafted body preserves Summary and Testing and has distinct Testing Steps and Proofs. It stays proportionate
-    to a one-word typo: no multi-step verification checklist, repeated check results, or irrelevant runtime-test
-    disclaimers. Brief content under each required heading is acceptable.'
-  - The body reports git diff --check as passed and invents neither an issue number nor additional test results.
-    The fixture supplies that passing result; the plan does not need to run it again.
-  - The plan returns https://github.com/example/review-demo/pull/42 to the user after creation.
-- id: rewrite_after_iterations
-  user_message: 'GitHub operations return https://github.com/example/review-demo/pull/42.
-
-
-    Update PR #42 to match the work. It is ready for review. No repository template. Issue #91 includes account
-    isolation plus a future storage redesign; this PR only fixes isolation.
-
-    Old title: Redesign cache storage. Old body: "Update 1: moved to Redis. Update 2: reverted Redis, fixed a missing
-    import. Update 3: all tests pass. cache.py changed, keys.py changed, tests changed. We boiled the ocean with
-    ACI."
-
-    Current diff: cache keys now include account ID so accounts cannot read each other''s cached values. It uses
-    separate write locks per account. A global lock was rejected because it blocked unrelated accounts. Known limitation:
-    first reads take 12 ms instead of 10 ms.
-
-    README: python -m venv .venv; .venv/bin/pip install -e .; .venv/bin/python scripts/cache_demo.py --accounts
-    a,b --key greeting. Observed base output a=hola,b=hola; current output a=hello,b=hola. No persistent data. Observed
-    .venv/bin/python -m pytest tests/test_cache.py: 18 passed, 1 failed (simultaneous writes within one account).
-    Full log: https://example.com/artifacts/cache-run.txt.'
-  must_not_include:
-  - 'Bash: gh pr ready\b'
-  rubric:
-  - The actual title/body describe account isolation and separate write locks as the current change. They remove
-    the Redis redesign, update log, resolved import debugging, and file inventory; an abandoned global lock may
-    be mentioned only to explain the current tradeoff.
-  - The actual description explains why account isolation matters and directs review toward account-specific keys
-    or concurrent writes. It is understandable without conversation history, uses plain English, and omits the supplied
-    idiom and unexplained ACI abbreviation. Familiar developer terms such as cache key and lock need not be defined.
-  - The actual description explicitly retains first-read latency rising from 10 to 12 ms and the supplied result
-    of 18 passed, 1 failed for simultaneous writes. These are valid supplied observations; fresh execution is not
-    required to report them. It does not claim the broader issue is fixed.
-  - Testing Steps provides the documented setup/demo and expected distinct account values; Proofs reports the supplied
-    output and check result separately, with a link rather than pasted long logs.
-  - The plan updates both title and body, preserves the existing ready state, and returns https://github.com/example/review-demo/pull/42.
-- id: ui_missing_evidence
-  user_message: 'GitHub operations return https://github.com/example/review-demo/pull/42.
-
-
-    Update draft PR #42. No issue or template. The diff makes the settings layout responsive; mobile should stop
-    overflowing. README: npm ci; npm run dev; open localhost:3000/settings at 375px and 1280px. Observed npm test:
-    8 passed. The screenshot skill is available and has not yet been invoked. When invoked in the planned workflow,
-    it will return "Browser unavailable" with no images. Old description says "Mobile verified; screenshots look
-    good." No visual run has actually succeeded.'
-  rubric:
-  - The plan invokes /aa:create-pr:screenshots for the UI change and preserves the existing draft state.
-  - The actual description removes the old claim of visual verification, explicitly says screenshots or visual checks
-    were not run because the browser was unavailable, and reports the supplied 8 passing automated tests without
-    inventing screenshot links.
-  - Testing Steps gives the supplied setup, URL, viewport widths, and expected absence of overflow; Proofs distinguishes
-    that expected behavior from the tests actually observed.
-- id: shorten_without_losing_evidence
-  user_message: |
-    Update draft PR #42. GitHub returns https://github.com/example/project/pull/42.
-    No template. The only change rejects malformed newsletter subscriber addresses.
-    Base-to-head history has one commit: "Validate subscriber addresses", with body:
-    "Reject malformed addresses before saving subscriptions so failed deliveries do not accumulate."
-    Old body: "First we inspected five files. Then we discussed whether regex was best.
-    We tried a library, reverted it, fixed an import, and debated naming. This is important
-    because bad addresses cause failed deliveries. Invalid addresses cause delivery failures.
-    We now reject malformed addresses. All delivery behavior works perfectly."
-    README setup: python3 -m venv .venv; .venv/bin/pip install -e .
-    Demo: .venv/bin/python scripts/subscribe.py --email broken (expected: Invalid email).
-    Cheap edge case: --email reader@example.com (expected: Subscribed).
-    Demo uses an in-memory store and needs no cleanup. Both outputs were observed.
-    Observed .venv/bin/python -m unittest discover -s tests: 12 tests passed.
-    Real delivery was not tested. Show the full replacement body, not just an editing plan.
-  rubric:
-  - 'The replacement body removes investigation history and repeated rationale, and remains proportionate to one validation change; no arbitrary line or word limit is required.'
-  - 'It includes Why, What, Testing Steps, and Proofs with concrete motivation, documented setup, reproducible commands, and expected results for both malformed and valid addresses.'
-  - 'It preserves the observed demo outputs and 12 passing tests while explicitly identifying real delivery as untested; it removes the claim that all delivery works.'
-  - 'Before publishing, the plan inspects actual commits and the complete replacement body and corrects defects without asking the user to edit or supervise.'
-
-- id: explain_sender_name_to_newcomer
-  user_message: |
-    Create a draft PR. GitHub returns https://github.com/example/project/pull/43.
-    No template. The reviewer understands email but has never used WordPress.
-    Change: after editing the sender name in settings, the next email uses that name
-    without restarting the plugin. Previously the plugin read the setting at startup.
-    Technical facts: a WordPress filter lets plugin code change a value before WordPress
-    uses it. wp_mail_from_name is the platform's sender-name filter. Using this filter
-    is conventional; reading the setting inside its callback is our design choice.
-    Test procedure: change sender name to News in settings, send a preview, and inspect
-    its From name. Expected: News. Observed: News. Observed command
-    python3 -m unittest discover -s tests: 3 tests passed. Real delivery was not tested.
-    Show the actual description. Keep necessary technical precision and a natural tone.
-  rubric:
-  - 'The description starts with the settings change and next-email example before platform internals.'
-  - 'Any use of filter or callback is explained in familiar language; the description separates WordPress convention from the choice to read the setting each time.'
-  - 'It keeps the preview procedure, observed result, test command and result, and untested real delivery, without inventing setup or claiming delivery verification.'
-  - 'It uses connected, natural prose and consistent terminology without claiming compliance with ASD-STE100 or imposing its controlled vocabulary.'
-- id: compare_ste_inspired_explanation
-  user_message: |
-    Explore wording for this PR before publishing; do not adopt a language standard.
-    Facts: changing the newsletter sender name now affects the next email without a
-    restart. A WordPress filter lets plugin code change a value before WordPress uses
-    it. The standard sender-name filter is wp_mail_from_name; reading the saved setting
-    inside that filter on each email is our design choice. Preview showed the new name;
-    real delivery was not tested. The reader understands email but not WordPress.
-    Write two short explanations of these same facts: ordinary plain English, then
-    an experimental version inspired by ASD-STE100 principles of active voice, one
-    topic per sentence, and consistent technical names. Compare clarity, accuracy,
-    and natural tone. Treat this as a writing experiment, not a compliance check.
-  rubric:
-  - 'Both actual versions lead with the next-email behavior, explain filter, distinguish convention from design choice, and preserve the preview-only evidence and untested delivery.'
-  - 'The comparison cites concrete wording from both versions and assesses clarity, technical accuracy, and natural tone rather than asserting that the named standard is better.'
-  - 'The recommendation is qualified as a judgment about this sample, not observed reader comprehension or standards compliance; it does not impose a controlled vocabulary on future PRs.'
+  - id: explain_the_change
+    user_message: |
+      Draft a PR description for someone new to WordPress. Changing the sender
+      name now affects the next email. WordPress lets plugins change the name
+      just before sending. We use that standard filter and chose to read the
+      saved name each time. A preview showed the new name. We haven't tested
+      real delivery.
+    rubric:
+      - Starts with the next email and explains the filter in words an email user can follow.
+      - Explains that WordPress provides the filter and the plugin reads the saved name on each send.
+      - Reports the preview result and identifies real delivery as untested.
