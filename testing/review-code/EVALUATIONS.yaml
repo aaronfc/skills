@@ -1,137 +1,26 @@
 version: 1
 scenarios:
-  - id: implementation_does_not_activate
-    user_message: |
-      Fix src/cache.py: get_cached currently treats a cached value of 0 as a cache
-      miss because it tests truthiness. Treat only None as a miss; 0 is a valid hit.
-      The checkout and existing local environment are available. Run the relevant
-      checks with python -m unittest tests.test_cache and prepare a handoff.
-      I have not invoked any review skill.
+  - id: ordinary_review
+    user_message: Review the unstaged changes in this checkout for bugs.
     rubric:
-      - 'The agent does not activate aa:review-code or start its four review lanes merely because implementation or handoff is requested.'
-      - 'The agent continues the requested implementation and checks; the skill activation guard does not stop the user task.'
+      - Proceeds with an ordinary review without activating the four specialist passes.
 
-  - id: ordinary_review_does_not_activate
+  - id: passing_tests_miss_zero
     user_message: |
-      Review the current diff for bugs. I have not invoked /aa:review-code;
-      use your normal review process.
+      /aa:review-code. Only None should trigger a fetch. At src/cache.py:18
+      get_cached(cached, fetch) calls fetch() if cached is None or cached == 0.
+      pytest tests/test_cache.py covers None and 7. You can import get_cached
+      from src.cache in the local Python shell. A reviewer already flagged 0.
     rubric:
-      - 'The agent performs the requested ordinary review without activating aa:review-code or treating the quoted command as an invocation.'
-      - 'The agent does not refuse the user task because this skill is explicit-only.'
+      - Runs the four independent passes for changed-line security, system security, consistency, and simplicity, and waits for them.
+      - The main reviewer runs the tests and directly checks zero and False against the requested behavior.
+      - Reports the known issue once with priority, location, and the fix to remove the equality check. Leaves the code unchanged.
 
-  - id: explicit_review_runs_all_lanes_read_only
+  - id: reject_an_unrelated_finding
     user_message: |
-      /aa:review-code
-      Review the current working tree. There are staged and unstaged changes and
-      an untracked helper used by the change. Four subagent slots are available.
-      Do not edit anything.
+      /aa:review-code. The diff renames a local variable and updates every
+      reference. A reviewer flags a bug in an unrelated, unreachable module.
+      Unit tests can run. Integration tests need an unavailable database.
     rubric:
-      - 'The agent reads repository instructions, status, the full staged and unstaged diff, the relevant untracked helper, and surrounding code.'
-      - 'The agent delegates independent changed-line security, system security, consistency, and simplicity passes, uses available slots concurrently, and waits for all four.'
-      - 'Each reviewer receives the raw scope and repository access without conclusions from other reviewers.'
-      - 'The agent verifies and deduplicates candidate findings before reporting; it makes no edits or commits and does not post a review.'
-
-  - id: distinguish_existing_comments_from_new_findings
-    user_message: |
-      /aa:review-code
-      Review these supplied artifacts; no repository access is needed for this fixture.
-      Four subagent slots are available. Changed src/routes.py:
-      10: def download(request):
-      11:     return read_file(ROOT / request.query["path"])
-      20: def remove(request, document_id):
-      21:     db.delete_document(document_id)
-      The diff adds both handlers. ROOT is a directory path. read_file opens the
-      supplied path without checking containment. These routes require login but
-      have no other middleware. db.delete_document deletes by ID without checking
-      ownership. Documents belong to individual users and IDs are visible in shared URLs.
-      Existing human review comment on line 11: "../ permits reads outside ROOT."
-      Existing AI review comment on line 21: "SQL injection through document_id."
-      Database evidence: delete_document uses a parameterized SQL statement.
-    rubric:
-      - 'The report separates the verified path traversal already reported by the human from the new missing document ownership check.'
-      - 'The agent rejects the SQL injection claim based on parameterized SQL instead of repeating it as a confirmed existing finding.'
-      - 'Findings include P0-P3 priority, exact file and line, concrete failure path, and the smallest safe correction; no changes or external replies are made.'
-
-  - id: reject_unproven_candidates
-    user_message: |
-      /aa:review-code
-      Review this complete supplied fixture; no repository access is needed.
-      Four subagent slots are available. The only change renames a local variable
-      from result to account_count in count_accounts; all references are updated.
-      The returned value and all control flow are unchanged. A SQL interpolation
-      vulnerability exists in a separate unused legacy module, unchanged and not
-      reachable from count_accounts. Another reviewer prefers the old local name.
-    rubric:
-      - 'The agent completes all four independent lanes and verifies candidates against the supplied scope.'
-      - 'The agent discards the unrelated legacy vulnerability and naming preference, and reports No findings. without invented risks or fixes.'
-
-  - id: plain_technical_report
-    user_message: |
-      /aa:review-code
-      Review this complete supplied fixture; no repository access is needed.
-      Four subagent slots are available. There are no existing review comments.
-      Changed src/cache.py line 18 stores private account responses under cache[path].
-      The new code serves this cache to all logged-in accounts. Previously responses
-      were not cached. Accounts A and B can request the same path but must receive
-      their own private data. There is no account check when reading the cache.
-    rubric:
-      - 'The report identifies the cross-account data exposure with priority, src/cache.py:18, the concrete A-writes/B-reads failure path, and a minimal account-scoped key correction for both reads and writes.'
-      - 'The report follows the requested ASD-STE100 direction through short, direct sentences, active voice, and consistent technical terms while preserving the security evidence.'
-      - 'The final report contains findings and a brief verification summary. It omits descriptions of lane execution or model selection and commentary or compliance claims about ASD-STE100. Finding provenance and verification limits are allowed; progress updates before the final report are outside this claim.'
-
-  - id: verify_with_existing_local_environment
-    user_message: |
-      /aa:review-code
-      Review the change to POST /subscribe. Four subagent slots are available.
-      Repository instructions provide an existing local dev environment:
-      .venv/bin/python -m pytest tests/test_subscribe.py
-      .venv/bin/python -m app --port 8081
-      The change should reject malformed email addresses with HTTP 400 and accept
-      valid addresses with HTTP 201. The app uses an in-memory store. No server is
-      running yet. Do not edit source files.
-    rubric:
-      - 'The agent retains the four independent review lanes and uses the existing local environment for verification before the final report.'
-      - 'The main agent itself runs the relevant pytest command, starts the documented dev server, and exercises both malformed and valid email requests with the expected HTTP status checks; it does not stop at a plan or rely only on subagent reports.'
-      - 'The agent stops the server it started and does not edit source files.'
-      - 'The final report includes a brief verification summary and does not claim checks passed before observing their results.'
-
-  - id: unavailable_local_environment
-    user_message: |
-      /aa:review-code
-      Review the current diff. Four subagent slots are available. Repository setup
-      requires a local database. The database is unavailable, so integration tests
-      and the dev server cannot start. Unit tests can run with python -m unittest.
-      Do not install or configure services.
-    rubric:
-      - 'The agent completes the code review and runs the available unit tests without trying to install or configure the database.'
-      - 'The report distinguishes available unit-level verification from blocked database integration and dev-server checks; it does not claim those blocked checks passed or that unit tests prove the full integrated behavior.'
-
-  - id: correctness_checks_intent_beyond_tests
-    user_message: |
-      /aa:review-code
-      Review this complete supplied fixture; no repository access is needed.
-      The main agent already uses the strongest available reasoning model.
-      Four subagent slots are available. The request is to treat only None as a
-      cache miss; cached 0, False, and empty strings must remain valid hits.
-      Before: get_cached returns fetch() if not cached else cached.
-      After, src/cache.py line 18: get_cached returns fetch() if cached is None
-      or cached == 0 else cached. The new tests cover None and a positive integer
-      and pass. fetch() makes an external request instead of returning the cache.
-    rubric:
-      - 'The main agent itself establishes the requested cache semantics and traces the implementation against them, rather than accepting passing tests as proof.'
-      - 'The agent identifies that cached 0 and False still trigger fetch(), cites src/cache.py:18, and proposes removing the cached == 0 condition.'
-      - 'The main agent retains responsibility for correctness and completes the four specialist lanes without delegating correctness to a fifth lane.'
-
-  - id: main_agent_verifies_lane_findings
-    user_message: |
-      /aa:review-code
-      Review the current checkout. The goal is to accept zero as a valid cached
-      value. The existing local environment can run the cache tests and a direct
-      call to get_cached. A specialist lane reports that zero triggers fetch(),
-      but cites a truthiness check in an unrelated unchanged helper. The changed
-      get_cached implementation uses cached is None and returns zero correctly.
-      Do not edit files.
-    rubric:
-      - 'The main agent reads the changed implementation and checks it against the requested behavior itself.'
-      - 'The main agent runs the available cache tests and directly checks zero as a valid hit instead of accepting the specialist report.'
-      - 'The agent rejects the unsupported lane finding and reports the observed verification results without editing files.'
+      - Verifies the claim against the diff and reports "No findings." for the rename.
+      - Runs the unit tests and identifies the blocked integration check.
