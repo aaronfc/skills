@@ -27,7 +27,7 @@ description: Wait read-only for pull-request events, triage new human feedback, 
    - **Requested authorization:** state the exact scope, including whether commit and push are requested.
    - **Suggested response — draft only:** give the user text they may post themselves.
    - **Status:** `waiting for approval, corrections, or dismissal`.
-6. Stop before any edit, stage, commit, push, or other mutation. Corrections revise the proposal and return to the checkpoint. Approval authorizes only the listed actions; ask again before expanding scope. After approved implementation, report the diff and tests and provide an updated response draft.
+6. Stop before any edit, stage, commit, push, or other mutation. Corrections revise the proposal and return to the checkpoint. Approval authorizes only the listed actions; ask again before expanding scope. After approved implementation, report the diff and tests and provide an updated response draft. Include the fixing commit SHA in plain text and identify any feedback still open or deferred.
 
 Never publish a PR comment or review, even after approval. Never call `gh pr comment`, `gh pr review`, or a write-capable GitHub API endpoint; the user posts any suggested response.
 
