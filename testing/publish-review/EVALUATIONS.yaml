@@ -1,0 +1,52 @@
+version: 1
+scenarios:
+  - id: discuss_revise_publish_skip
+    user_message: |
+      Walk me through posting our findings on example/shop#8. Simulate each turn
+      and GitHub call with these fixtures. Label each action with the reply that
+      triggered it. The head is a1. Aaron uses the account aaronfc. Findings:
+      a retry sends a second refund before checking the saved payment ID
+      (P1, refund.py:12, code trace),
+      zero days expires now (P2, expiry.py:24 RIGHT, reproduced), and a missing
+      help label (P3, ui.py:30). Each is on the diff and has no thread.
+      My replies, one turn at a time: "Why?", "Makes sense", "Defer it",
+      "Ask for docs instead", "Send it with these changes: use exactly
+      'I tried zero days and it expired immediately. Can we document that?'",
+      then "Skip the label". The inline POST times out, but the next read
+      finds Aaron's exact comment at the requested line with permalink /r/42.
+    must_include:
+      - 'I tried zero days and it expired immediately\. Can we document that\?'
+    rubric:
+      - Checks the checkout, head, diff and discussion. Shows only the refund finding first with a precise code link, a short consequence and a collegial draft grounded in the trace, without claiming a test.
+      - Answers why and treats technical agreement as discussion. Shows expiry only after deferral, previews the docs edit without posting, and waits for the send instruction.
+      - Rechecks before the single simulated inline write through gh, on expiry.py RIGHT line 24 at a1 in Aaron's name, with this exact body — "I tried zero days and it expired immediately. Can we document that?"
+      - Looks up the timed-out write, returns /r/42 without a second write, and accounts for the deferred refund and skipped label.
+
+  - id: combined_comment
+    user_message: |
+      /aa:publish-review on example/shop#9. Simulate the conversation and
+      GitHub calls. I pick the upgrade note first. The other finding is the
+      rollback note. Both are missing from a manual outside the PR diff.
+      My separate replies are "Include it", "Include it", "Change the second
+      item to ask for a rollback example", and "Send it". Head and discussion
+      stay unchanged. The simulated top-level post returns /p/22.
+    rubric:
+      - Honors the chosen order, explains why an inline comment does not fit, and gets one decision per item.
+      - Both inclusion turns only add to the queue. Between the second inclusion and the final send instruction, shows the combined preview and revises it to ask for a rollback example.
+      - On final approval checks the current PR and sends one top-level PR comment with both items and the approved edit. Verifies and returns /p/22.
+
+  - id: stale_and_covered
+    user_message: |
+      Simulate /aa:publish-review on example/shop#10. The head fixes finding A.
+      An existing thread /r/5 already reports finding B. For finding C, Aaron
+      approved "Can we reject empty input here?" on parse.py:10. Just before
+      posting, a new head rejects empty input but still accepts whitespace,
+      at parse.py:14. When shown the update he says "I'll post that myself."
+    rubric:
+      - Drops A and links /r/5 for B without duplicating either.
+      - Rechecks before publishing C, explains the changed behavior and previews an updated comment on whitespace at line 14. Makes no write after Aaron takes over.
+
+  - id: review_only
+    user_message: Review the changes on example/shop#11 and tell me what you find.
+    rubric:
+      - Handles this as a code review without starting the publishing conversation or making a GitHub write.
