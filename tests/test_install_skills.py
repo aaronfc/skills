@@ -237,6 +237,45 @@ class InstallSkillsCLITest(unittest.TestCase):
             self.assertIn("outside the checkout", rejected.stderr)
             self.assertFalse((base / "second").exists())
 
+    def test_foreign_links_through_parent_traversal_survive_update_and_cleanup(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = pathlib.Path(tmp)
+            repo = base / "repo"
+            repo.mkdir()
+            init_repo(repo)
+            add_skill(repo, "source", "---\nname: demo\n---\n")
+            (base / "external" / "child").mkdir(parents=True)
+            (repo / "via").symlink_to(base / "external" / "child")
+            target = base / "target"
+            target.mkdir()
+            for name in ("demo", "stale"):
+                (target / name).symlink_to(repo / "via" / ".." / "foreign")
+            for dry_run in (["--dry-run"], []):
+                result = self.run_cli("--repo", str(repo), "--target", str(target), *dry_run)
+                self.assertEqual(result.returncode, 1, result.stdout)
+                self.assertIn("0 removed", result.stdout)
+                self.assertIn("1 conflict", result.stdout)
+                for name in ("demo", "stale"):
+                    self.assertEqual(os.readlink(target / name), str(repo / "via" / ".." / "foreign"))
+
+    def test_case_variant_of_desired_link(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = pathlib.Path(tmp)
+            repo = base / "repo"
+            repo.mkdir()
+            init_repo(repo)
+            source = add_skill(repo, "source", "---\nname: demo\n---\n")
+            target = base / "target"
+            target.mkdir()
+            (target / "Demo").symlink_to(source)
+            same_entry = (target / "demo").is_symlink()
+            for dry_run in (["--dry-run"], []):
+                result = self.run_cli("--repo", str(repo), "--target", str(target), *dry_run)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn("0 removed" if same_entry else "1 removed", result.stdout)
+            self.assertEqual((target / "demo").resolve(), source.resolve())
+            self.assertEqual(len(list(target.iterdir())), 1)
+
     def test_installs_to_all_default_clients_and_is_idempotent(self):
         with tempfile.TemporaryDirectory() as tmp:
             base = pathlib.Path(tmp)

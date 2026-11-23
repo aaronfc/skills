@@ -196,11 +196,10 @@ def direct_link_target(link: pathlib.Path) -> pathlib.Path | None:
     try:
         raw = pathlib.Path(os.readlink(link))
         joined = raw if raw.is_absolute() else (link.parent.resolve() / raw)
-        normalized = pathlib.Path(os.path.normpath(str(joined)))
-        if normalized == normalized.parent:
-            return normalized
-        return normalized.parent.resolve() / normalized.name
-    except OSError:
+        if joined.name == "..":
+            return joined.resolve()
+        return joined.parent.resolve() / joined.name
+    except (OSError, RuntimeError):
         return None
 
 
@@ -235,7 +234,7 @@ def sync_target(
     if not dir_existed and not dry_run:
         target_dir.mkdir(parents=True, exist_ok=True)
 
-    desired = {skill.installed_name: skill for skill in skills}
+    desired = {skill.installed_name for skill in skills}
 
     for skill in skills:
         dest = target_dir / skill.installed_name
@@ -279,10 +278,23 @@ def sync_target(
         )
 
     if dir_existed:
-        for entry in sorted(target_dir.iterdir(), key=lambda p: p.name):
+        entries = sorted(target_dir.iterdir(), key=lambda p: p.name)
+        # On case-insensitive volumes a desired name can match another directory spelling.
+        matched_aliases = set()
+        for name in desired.difference(entry.name for entry in entries):
+            dest = target_dir / name
+            if dest.is_symlink():
+                stat = dest.lstat()
+                matched_aliases.add((stat.st_dev, stat.st_ino))
+
+        for entry in entries:
             if entry.name in desired:
                 continue
             if entry.is_symlink() and is_owned_by_repo(entry, resolved_repo):
+                if matched_aliases:
+                    stat = entry.lstat()
+                    if (stat.st_dev, stat.st_ino) in matched_aliases:
+                        continue
                 old_raw = os.readlink(entry)
                 if not dry_run:
                     entry.unlink()
