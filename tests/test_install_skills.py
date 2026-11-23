@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import pathlib
 import subprocess
 import sys
@@ -177,21 +178,27 @@ class DiscoverSkillsTest(unittest.TestCase):
             with self.assertRaises(installer.DiscoveryError):
                 installer.discover_skills(repo)
 
+    def test_scalar_names_with_comments_and_block_indicators(self):
+        installer = load_installer()
+        for name, expected in (
+            (">- # folded\n  aa:multi\n  line", "aa-multi-line"),
+            ("|2+\n  aa:multi\n  line", "aa-multi-line"),
+            ("'demo # helper' # comment", "demo-helper"),
+        ):
+            with self.subTest(name=name):
+                value = installer.parse_frontmatter_name(f"---\nname: {name}\n---\n")
+                self.assertEqual(installer.normalize_installed_name(value), expected)
+
     def test_discovers_all_skills_in_this_repository(self):
         installer = load_installer()
         discovered = installer.discover_skills(REPO_ROOT)
-        self.assertEqual(
-            [s.installed_name for s in discovered],
-            [
-                "aa-afk",
-                "aa-babysit-pr",
-                "aa-create-pr",
-                "aa-create-pr-screenshots",
-                "aa-publish-review",
-                "aa-review-code",
-                "aa-sharpen-skill",
-                "handoff",
-            ],
+        paths = subprocess.check_output(
+            ["git", "-C", str(REPO_ROOT), "ls-files", "-z", "--", "*/SKILL.md"]
+        ).split(b"\0")
+        tracked = [os.fsdecode(path) for path in paths if path]
+        self.assertCountEqual(
+            (skill.rel_skill_file for skill in discovered),
+            (path for path in tracked if (REPO_ROOT / path).is_file()),
         )
 
 
@@ -202,6 +209,33 @@ class InstallSkillsCLITest(unittest.TestCase):
             text=True,
             capture_output=True,
         )
+
+    def test_links_manifest_directory_and_rejects_external_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = pathlib.Path(tmp)
+            repo = base / "repo"
+            repo.mkdir()
+            init_repo(repo)
+            template = repo / "template.md"
+            template.write_text("---\ndescription: |\n  ---\nname: >-\n  aa:linked\n---\n")
+            source = repo / "source"
+            source.mkdir()
+            (source / "SKILL.md").symlink_to("../template.md")
+            subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+            target = base / "target"
+            result = self.run_cli("--repo", str(repo), "--target", str(target))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            link = target / "aa-linked"
+            self.assertEqual(link.resolve(), source.resolve())
+            self.assertEqual((link / "SKILL.md").read_text(), template.read_text())
+
+            # Redirect the tracked manifest outside the checkout before a second install.
+            template.rename(base / "external.md")
+            template.symlink_to(base / "external.md")
+            rejected = self.run_cli("--repo", str(repo), "--target", str(base / "second"))
+            self.assertNotEqual(rejected.returncode, 0)
+            self.assertIn("outside the checkout", rejected.stderr)
+            self.assertFalse((base / "second").exists())
 
     def test_installs_to_all_default_clients_and_is_idempotent(self):
         with tempfile.TemporaryDirectory() as tmp:

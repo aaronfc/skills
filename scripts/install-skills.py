@@ -69,14 +69,13 @@ def parse_frontmatter_name(content: str) -> str | None:
 
     frontmatter_lines: list[str] = []
     for line in lines[1:]:
-        stripped = line.strip()
-        if stripped in {"---", "..."}:
+        if line.rstrip() in {"---", "..."}:
             break
         frontmatter_lines.append(line)
     else:
         return None
 
-    for line in frontmatter_lines:
+    for index, line in enumerate(frontmatter_lines):
         if not line or line[0].isspace():
             continue
         match = re.match(r"^name\s*:\s*(.*)$", line)
@@ -85,8 +84,20 @@ def parse_frontmatter_name(content: str) -> str | None:
         raw = match.group(1).strip()
         if not raw:
             return None
-        if len(raw) >= 2 and raw[0] == raw[-1] and raw[0] in {'"', "'"}:
-            return raw[1:-1].strip() or None
+        if re.fullmatch(r"[>|](?:[+-]?[1-9]?|[1-9][+-]?)(?:\s+#.*)?", raw):
+            # Folding and line breaks both become separators in installed names.
+            parts = []
+            for part in frontmatter_lines[index + 1:]:
+                if part and not part[0].isspace():
+                    break
+                parts.append(part.strip())
+            return " ".join(parts).strip() or None
+        quoted = re.fullmatch(r"""('(?:[^']|'')*'|"(?:[^"\\]|\\.)*")(?:\s+#.*)?""", raw)
+        if quoted:
+            value = quoted[1][1:-1]
+            if quoted[1].startswith("'"):
+                value = value.replace("''", "'")
+            return value.strip() or None
         raw = re.sub(r"\s+#.*$", "", raw).strip()
         return raw or None
 
@@ -141,10 +152,15 @@ def discover_skills(repo_root: pathlib.Path) -> list[Skill]:
         rel = pathlib.PurePosixPath(rel_path)
         if rel.name != "SKILL.md":
             continue
-        skill_file = (resolved_root / rel_path).resolve()
+        skill_file = resolved_root / rel_path
+        source_dir = skill_file.parent.resolve()
+        if not (
+            source_dir.is_relative_to(resolved_root)
+            and skill_file.resolve().is_relative_to(resolved_root)
+        ):
+            raise DiscoveryError(f"Skill file {rel_path} points outside the checkout.")
         if not skill_file.is_file():
             continue
-        source_dir = skill_file.parent
         if source_dir == resolved_root:
             raise DiscoveryError(
                 f"Skill file {rel_path} cannot live directly at the repository root."
