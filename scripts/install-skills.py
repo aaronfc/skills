@@ -13,11 +13,9 @@ import sys
 
 
 DEFAULT_CLIENT_PATHS: dict[str, tuple[str, ...]] = {
-    "claude": (".claude", "skills"),
-    "codex": (".codex", "skills"),
     "agents": (".agents", "skills"),
+    "claude": (".claude", "skills"),
     "antigravity": (".gemini", "config", "skills"),
-    "gemini": (".gemini", "skills"),
 }
 
 

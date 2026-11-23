@@ -223,11 +223,9 @@ class InstallSkillsCLITest(unittest.TestCase):
             self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
 
             expected_dirs = {
-                "claude": home / ".claude" / "skills",
-                "codex": home / ".codex" / "skills",
                 "agents": home / ".agents" / "skills",
+                "claude": home / ".claude" / "skills",
                 "antigravity": home / ".gemini" / "config" / "skills",
-                "gemini": home / ".gemini" / "skills",
             }
             for client, target_dir in expected_dirs.items():
                 afk_link = target_dir / "aa-afk"
@@ -238,6 +236,10 @@ class InstallSkillsCLITest(unittest.TestCase):
                 )
                 self.assertEqual(afk_link.resolve(), afk_dir.resolve())
                 self.assertEqual(babysit_link.resolve(), nested_dir.resolve())
+
+            # Overlapping paths that cause duplicate/priority conflicts are not touched.
+            self.assertFalse((home / ".codex").exists())
+            self.assertFalse((home / ".gemini" / "skills").exists())
 
             # Edits in the checkout take effect immediately through the symlinks.
             (afk_dir / "SKILL.md").write_text(
@@ -529,14 +531,19 @@ class InstallSkillsCLITest(unittest.TestCase):
             add_skill(repo, "afk", "---\nname: aa:afk\ndescription: x\n---\n")
 
             selected = self.run_cli(
-                "--repo", str(repo), "--home", str(home), "--client", "antigravity,gemini"
+                "--repo",
+                str(repo),
+                "--home",
+                str(home),
+                "--client",
+                "agents,antigravity",
             )
             self.assertEqual(selected.returncode, 0, selected.stdout + selected.stderr)
-            self.assertTrue((home / ".gemini" / "config" / "skills" / "aa-afk").is_symlink())
-            self.assertTrue((home / ".gemini" / "skills" / "aa-afk").is_symlink())
+            self.assertTrue((home / ".agents" / "skills" / "aa-afk").is_symlink())
+            self.assertTrue(
+                (home / ".gemini" / "config" / "skills" / "aa-afk").is_symlink()
+            )
             self.assertFalse((home / ".claude").exists())
-            self.assertFalse((home / ".codex").exists())
-            self.assertFalse((home / ".agents").exists())
 
             invalid = self.run_cli(
                 "--repo",
