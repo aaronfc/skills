@@ -276,6 +276,23 @@ class InstallSkillsCLITest(unittest.TestCase):
             self.assertEqual((target / "demo").resolve(), source.resolve())
             self.assertEqual(len(list(target.iterdir())), 1)
 
+    def test_literal_target_with_equals(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = pathlib.Path(tmp)
+            repo = base / "repo"
+            repo.mkdir()
+            init_repo(repo)
+            source = add_skill(repo, "demo", "---\nname: demo\n---\n")
+            for path in (str(base / "env=qa"), "./env=qa", "staging=./env=qa"):
+                with self.subTest(path=path):
+                    result = subprocess.run(
+                        [sys.executable, str(SCRIPT_PATH), "--repo", str(repo), "--target", path],
+                        cwd=base, capture_output=True, text=True,
+                    )
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual((base / "env=qa" / "demo").resolve(), source.resolve())
+                    self.assertFalse((base / "qa").exists())
+
     def test_installs_to_all_default_clients_and_is_idempotent(self):
         with tempfile.TemporaryDirectory() as tmp:
             base = pathlib.Path(tmp)

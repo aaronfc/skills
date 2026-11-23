@@ -335,10 +335,11 @@ def parse_targets(
     if raw_targets:
         specs: list[TargetSpec] = []
         for item in raw_targets:
-            if "=" in item:
-                name, path_str = item.split("=", 1)
-                name = name.strip()
-                path_str = path_str.strip()
+            label, separator, value = item.partition("=")
+            path_prefix = "/" in label or "\\" in label or label.startswith("~")
+            if separator and not path_prefix:
+                name = label.strip()
+                path_str = value.strip()
             else:
                 name = item.strip()
                 path_str = item.strip()
@@ -432,7 +433,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="append",
         help=(
             "Custom install directory (NAME=PATH or PATH); repeatable. "
-            "Installs only to these directories instead of default clients."
+            "Use ./env=qa for a literal relative path containing '='."
         ),
     )
     parser.add_argument(
