@@ -8,6 +8,7 @@
     "./testing/babysit-pr",
     "./testing/review-code",
     "./testing/publish-review",
+    "./testing/walk-pr",
     "./testing/mattpocock/handoff"
   ]
 }

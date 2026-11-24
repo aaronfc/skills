@@ -1,0 +1,27 @@
+version: 1
+scenarios:
+  - id: start_with_the_problem
+    user_message: |
+      The review is done. Walk me through this PR so I can decide whether to
+      approve. Give me the first turn. A merchant used to see "name updated"
+      after editing only a price. The PR builds the confirmation from the fields
+      actually saved. The review also covered the serializer and translations.
+    rubric:
+      - Uses the price edit to explain the original problem and what the merchant will see after the change.
+      - Stops after that single concept with a short comprehension check and leaves the decision with the reviewer.
+
+  - id: teach_the_boundary
+    user_message: |
+      Continue our walkthrough after I have understood the goal. The PR stores
+      a request ID so a retried export does not create a second file. IDs expire
+      after a day. The same store handles import retries. The PR gives no reason
+      for the one-day window. The reviewer replayed an export after a minute
+      and saw one file. No replay after expiry was tested.
+      Simulate separate turns for these consecutive replies:
+      "So the same export can never run twice?"
+      "Understood. Why a day, and what did we actually verify?"
+      "I want to explain to a colleague how this relates to import retries."
+    rubric:
+      - First addresses the misunderstanding using a retry within the window and a retry after expiry. Pauses before answering the next reply.
+      - Accepts the confirmation. Distinguishes the observed one-minute result from the expected but untested expiry behavior and says the reason for the duration is unknown.
+      - Explains how remembering an ID applies to both exports and imports. Gives the reviewer room to explain it in their own words without claiming that imports were tested.
