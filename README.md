@@ -13,6 +13,7 @@ Right now:
 - **[`sharpen-skill/`](sharpen-skill/)** — simplify skills with evaluation-backed checks.
 - **`testing/`** — skills I am testing or experimenting with, including Matt Pocock's [`handoff`](testing/mattpocock/handoff/) for passing context to another agent.
   - [`/aa:review-pr`](testing/review-pr/SKILL.md) — review changes and rank findings by priority.
+  - [`/aa:publish-review`](testing/publish-review/SKILL.md) — discuss existing review findings and approve each comment before posting.
   - [`/aa:my-words`](testing/my-words/SKILL.md) — draft findings and replies to PR feedback in your voice. Approve each message before posting.
   - [`/aa:gandalf`](testing/gandalf/SKILL.md) — talk through a reviewed PR before deciding whether to approve.
 
@@ -50,9 +51,9 @@ Some skills ship with an `EVALUATIONS.yaml`. I'm using these to dogfood [unvibe]
 
 ## Changelog
 
-- **2026-11-24** — Renamed `review-code` to `review-pr`, `publish-review` to `my-words`, and `walk-pr` to `gandalf`. Added review-thread replies to `my-words`.
+- **2026-11-24** — Renamed `review-code` to `review-pr` and `walk-pr` to `gandalf`. Added `my-words` alongside `publish-review` to try drafting findings and review-thread replies with one skill.
 
-- **2026-11-20** — Added `aa:publish-review` with [unvibe evaluations](testing/my-words/EVALUATIONS.yaml).
+- **2026-11-20** — Added `aa:publish-review` with [unvibe evaluations](testing/publish-review/EVALUATIONS.yaml).
 - **2026-09-17** — Promoted `afk`, both `pr-authoring` skills, and `sharpen-skill` to the root. Deprecated and removed `work-mode`; removed the vendored Matt Pocock skills except `handoff`, which was restored.
 - **2026-07-30** — Added `aa:babysit-pr` for PR monitoring.
 - **2026-07-25** — Standardized evaluation filenames as `EVALUATIONS.yaml`.
