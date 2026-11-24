@@ -24,7 +24,7 @@ scenarios:
 
   - id: combined_comment
     user_message: |
-      /aa:publish-review on example/shop#9. Simulate the conversation and
+      /aa:my-words on example/shop#9. Simulate the conversation and
       GitHub calls. I pick the upgrade note first. The other finding is the
       rollback note. Both are missing from a manual outside the PR diff.
       My separate replies are "Include it", "Include it", "Change the second
@@ -37,7 +37,7 @@ scenarios:
 
   - id: stale_and_covered
     user_message: |
-      Simulate /aa:publish-review on example/shop#10. The head fixes finding A.
+      Simulate /aa:my-words on example/shop#10. The head fixes finding A.
       An existing thread /r/5 already reports finding B. For finding C, Aaron
       approved "Can we reject empty input here?" on parse.py:10. Just before
       posting, a new head rejects empty input but still accepts whitespace,
@@ -50,3 +50,14 @@ scenarios:
     user_message: Review the changes on example/shop#11 and tell me what you find.
     rubric:
       - Handles this as a code review without starting the publishing conversation or making a GitHub write.
+
+  - id: reply_after_fix
+    user_message: |
+      /aa:my-words. A reviewer asked in /r/7 why retries issue a second refund.
+      We pushed commit b2 which checks the saved payment ID first. Simulate the
+      conversation and GitHub calls. My replies are "The fix looks good",
+      "Mention why the check comes first", then "Send it".
+    rubric:
+      - Checks the thread and pushed commit, then drafts a reply explaining the fix with a link to b2.
+      - Treats agreement as discussion, previews the edit, and waits for the send instruction.
+      - Rechecks and posts the approved wording once as a reply in /r/7, then verifies the reply and returns its permalink.

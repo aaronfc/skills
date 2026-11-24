@@ -1,9 +1,9 @@
 ---
-name: aa:walk-pr
+name: aa:gandalf
 description: Guide a reviewer through an already reviewed pull request, one concept at a time. Use when they ask to understand the change and its trade-offs before deciding whether to approve.
 ---
 
-# Walk through a PR
+# Understand a PR before approving it
 
 The reviewer owns the approval decision. Help them build the confidence to explain the PR to a colleague later, in their own words. They should understand what changed, how it works, why this approach was chosen, and what evidence supports their decision.
 

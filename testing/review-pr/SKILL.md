@@ -1,11 +1,11 @@
 ---
-name: aa:review-code
-description: Review changed code through a main-agent correctness review and independent security, consistency, and simplicity passes. Use only when the user explicitly invokes "/aa:review-code". Do not trigger automatically for implementation, handoff, commit, pull request, or general code-review tasks.
+name: aa:review-pr
+description: Review changed code through a main-agent correctness review and independent security, consistency, and simplicity passes. Use only when the user explicitly invokes "/aa:review-pr". Do not trigger automatically for implementation, handoff, commit, pull request, or general code-review tasks.
 ---
 
 # Review Code
 
-If the user did not explicitly invoke `/aa:review-code`, do not apply this skill; continue the user's task normally.
+If the user did not explicitly invoke `/aa:review-pr`, do not apply this skill; continue the user's task normally.
 
 Review only; do not edit unless explicitly asked. Read the request, repository instructions, status, full diff, relevant untracked files, and enough surrounding code to understand the change.
 

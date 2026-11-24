@@ -7,7 +7,7 @@ scenarios:
 
   - id: passing_tests_miss_zero
     user_message: |
-      /aa:review-code. Only None should trigger a fetch. At src/cache.py:18
+      /aa:review-pr. Only None should trigger a fetch. At src/cache.py:18
       get_cached(cached, fetch) calls fetch() if cached is None or cached == 0.
       pytest tests/test_cache.py covers None and 7. You can import get_cached
       from src.cache in the local Python shell. A reviewer already flagged 0.
@@ -18,7 +18,7 @@ scenarios:
 
   - id: reject_an_unrelated_finding
     user_message: |
-      /aa:review-code. The diff renames a local variable and updates every
+      /aa:review-pr. The diff renames a local variable and updates every
       reference. A reviewer flags a bug in an unrelated, unreachable module.
       Unit tests can run. Integration tests need an unavailable database.
     rubric:

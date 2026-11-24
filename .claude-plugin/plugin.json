@@ -6,9 +6,9 @@
     "./sharpen-skill",
     "./afk",
     "./testing/babysit-pr",
-    "./testing/review-code",
-    "./testing/publish-review",
-    "./testing/walk-pr",
+    "./testing/review-pr",
+    "./testing/my-words",
+    "./testing/gandalf",
     "./testing/mattpocock/handoff"
   ]
 }

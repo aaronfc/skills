@@ -501,8 +501,8 @@ class InstallSkillsCLITest(unittest.TestCase):
             )
             add_skill(
                 repo,
-                "testing/publish-review",
-                "---\nname: aa:publish-review\ndescription: x\n---\n",
+                "testing/my-words",
+                "---\nname: aa:my-words\ndescription: x\n---\n",
             )
 
             agents_dir = home / ".agents" / "skills"
@@ -524,8 +524,8 @@ class InstallSkillsCLITest(unittest.TestCase):
             other_sharpen.mkdir()
             (claude_dir / "aa-sharpen-skill").symlink_to(other_sharpen)
 
-            # Existing regular file in ~/.agents/skills/aa-publish-review.
-            (agents_dir / "aa-publish-review").write_text("not a dir", encoding="utf-8")
+            # Existing regular file in ~/.agents/skills/aa-my-words.
+            (agents_dir / "aa-my-words").write_text("not a dir", encoding="utf-8")
 
             result = self.run_cli(
                 "--repo",
@@ -541,10 +541,10 @@ class InstallSkillsCLITest(unittest.TestCase):
             self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
 
             # Non-conflicting skill in claude was still installed.
-            self.assertTrue((claude_dir / "aa-publish-review").is_symlink())
+            self.assertTrue((claude_dir / "aa-my-words").is_symlink())
             self.assertEqual(
-                (claude_dir / "aa-publish-review").resolve(),
-                (repo / "testing" / "publish-review").resolve(),
+                (claude_dir / "aa-my-words").resolve(),
+                (repo / "testing" / "my-words").resolve(),
             )
             # Existing repo-owned symlink in agents stayed unchanged.
             self.assertEqual((agents_dir / "aa-afk").resolve(), (repo / "afk").resolve())
@@ -555,7 +555,7 @@ class InstallSkillsCLITest(unittest.TestCase):
                 (copy_dir / "SKILL.md").read_text(encoding="utf-8"), "local copy"
             )
             self.assertEqual(
-                (agents_dir / "aa-publish-review").read_text(encoding="utf-8"),
+                (agents_dir / "aa-my-words").read_text(encoding="utf-8"),
                 "not a dir",
             )
             self.assertEqual(
@@ -573,7 +573,7 @@ class InstallSkillsCLITest(unittest.TestCase):
             # Every conflict is reported in output.
             self.assertIn("conflict", result.stdout.lower())
             self.assertIn("aa-sharpen-skill", result.stdout)
-            self.assertIn("aa-publish-review", result.stdout)
+            self.assertIn("aa-my-words", result.stdout)
             self.assertIn("aa-afk", result.stdout)
 
     def test_source_collision_fails_before_touching_targets(self):
