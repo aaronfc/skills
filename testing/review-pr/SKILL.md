@@ -34,7 +34,16 @@ The main agent must independently verify every candidate from its own review and
 
 Take into account existing comments from other reviewers (human or ai assistants). Separate already reported things from new findings from our own.
 
-Deduplicate verified findings from all reviewers and report each issue once, ordered by severity, followed by a brief verification summary with checks run, results, and material gaps. Keep the final report to findings and verification evidence; omit review-process narrative and commentary about the language standard. For each finding, give a P0–P3 priority, exact file and line, concise failure path, and smallest safe fix. If none survive verification, say `No findings.` Use Simplified Technical English (ASD-STE100) in your report.
+Report each verified issue once, highest priority first. Give its priority, exact file and line, concise failure path, and smallest safe fix. If none survive verification, say `No findings.` Use Simplified Technical English (ASD-STE100) and omit review-process commentary.
+
+Show all four priority definitions immediately before the final verification summary in every review.
+
+- **P0 — Blocker.** The issue blocks a release, operations, or a major use case regardless of input. Fix immediately.
+- **P1 — Urgent.** Fix in the next development cycle.
+- **P2 — Normal.** Plan a fix. It can wait beyond the next cycle.
+- **P3 — Low.** The fix is optional. Make it when time permits.
+
+End with a brief verification summary covering the checks run, their results, and any material gaps.
 
 ## Follow up on a posted PR review
 
