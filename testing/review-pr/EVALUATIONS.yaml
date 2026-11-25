@@ -15,6 +15,7 @@ scenarios:
       - Runs the four independent passes for changed-line security, system security, consistency, and simplicity, and waits for them.
       - The main reviewer runs the tests and directly checks zero and False against the requested behavior.
       - Reports the known issue once with priority, location, and the fix to remove the equality check. Leaves the code unchanged.
+      - Immediately before the final verification summary, explains all four priorities. P0 requires an immediate fix for an input-independent blocker, P1 needs a fix next cycle, P2 can wait for a later cycle, and P3 is optional.
 
   - id: reject_an_unrelated_finding
     user_message: |
@@ -24,3 +25,4 @@ scenarios:
     rubric:
       - Verifies the claim against the diff and reports "No findings." for the rename.
       - Runs the unit tests and identifies the blocked integration check.
+      - Explains all four priorities (P0–P3) before the verification summary. Accept "No findings." on either side of the legend.
