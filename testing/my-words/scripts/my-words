@@ -1,0 +1,208 @@
+#!/usr/bin/env python3
+"""Save and publish revision-specific PR comments using the authenticated gh CLI."""
+import argparse
+import datetime as dt
+import json
+import os
+from pathlib import Path
+import re
+import sqlite3
+import subprocess
+import sys
+import time
+from uuid import uuid4
+
+
+class RejectedPost(ValueError):
+    """GitHub explicitly rejected the write."""
+
+
+def api(host, path, *, body=None, pages=False):
+    cmd = ["gh", "api", "--hostname", host, path]
+    if pages:
+        cmd.extend(["--paginate", "--slurp"])
+    if body is not None:
+        cmd.extend(["--method", "POST", "--input", "-"])
+    result = subprocess.run(cmd, input=json.dumps(body) if body is not None else None,
+                            text=True, capture_output=True, timeout=90)
+    if result.returncode:
+        message = result.stderr.strip() or "gh api failed"
+        if body is not None and re.search(r"\(HTTP (?:400|401|403|404|410|422|429)\)", message):
+            raise RejectedPost(message)
+        raise ValueError(message)
+    data = json.loads(result.stdout)
+    return [item for page in data for item in page] if pages else data
+
+
+def load(db, key):
+    row = db.execute("SELECT data FROM drafts WHERE id=?", (key,)).fetchone()
+    if not row:
+        raise ValueError("Unknown draft ID")
+    return json.loads(row[0])
+
+
+def save(db, key, data):
+    db.execute("INSERT OR REPLACE INTO drafts VALUES (?, ?)", (key, json.dumps(data)))
+
+
+def draft(db, args):
+    old = load(db, args.replaces) if args.replaces else {}
+    if old and old["status"] != "draft":
+        raise ValueError("Only an unsent, current revision can be edited")
+    data = old.copy()
+    for field in ("pr", "login", "head", "head_checked", "discussion_checked"):
+        value = getattr(args, field)
+        if value is not None:
+            data[field] = value
+    if not re.fullmatch(r"https://[\w.-]+/[\w.-]+/[\w.-]+/pull/[1-9]\d*", data.get("pr", "")):
+        raise ValueError("Supply the full HTTPS pull request URL")
+    if old and (data["pr"], data["login"]) != (old["pr"], old["login"]):
+        raise ValueError("A replacement must keep the same PR and account")
+    if not data.get("login") or not data.get("head"):
+        raise ValueError("Supply the expected --login and reviewed --head")
+    if old and data["head"] != old["head"] and args.head_checked is None:
+        data.pop("head_checked", None)
+    for field in ("head_checked", "discussion_checked"):
+        if field in data and not 0 <= data[field] <= time.time():
+            raise ValueError(f"{field} must be a past Unix timestamp")
+    if args.inline:
+        path, side, line = args.inline
+        if side not in ("LEFT", "RIGHT") or int(line) < 1 or not path:
+            raise ValueError("Use --inline PATH LEFT|RIGHT LINE")
+        data["target"] = dict(path=path, side=side, line=int(line))
+    elif args.reply is not None:
+        if args.reply < 1:
+            raise ValueError("Supply the root review comment ID")
+        data["target"] = {"in_reply_to_id": args.reply}
+    elif args.top_level:
+        data["target"] = {}
+    if "target" not in data:
+        raise ValueError("Choose --inline, --reply or --top-level")
+    raw = sys.stdin.buffer.read() if args.body_file == "-" else Path(args.body_file).read_bytes()
+    data["body"] = raw.decode("utf-8")
+    if not data["body"].strip():
+        raise ValueError("The draft is empty")
+    key = uuid4().hex
+    if old:
+        old["status"] = "superseded"
+        save(db, args.replaces, old)
+    data["status"] = "draft"
+    save(db, key, data)
+    return dict(id=key, pr=data["pr"], target=data["target"], body=data["body"])
+
+
+def utc(seconds):
+    return dt.datetime.fromtimestamp(int(seconds), dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def refresh(d, host, pull, issue):
+    now = time.time()
+    if now - d.get("head_checked", 0) > 300:
+        pr = api(host, pull)
+        if pr["head"]["sha"] != d["head"] or pr["state"] != "open":
+            raise ValueError(f'Review the PR before sending: {pr["state"]}, head {pr["head"]["sha"]}')
+    since = d.get("discussion_checked", 0)
+    if now - since <= 300:
+        return
+    cutoff = utc(since)
+    changed = []
+    for endpoint, field in [(issue + "/comments", "updated_at"),
+                            (pull + "/comments", "updated_at"), (pull + "/reviews", "submitted_at")]:
+        for item in api(host, endpoint + "?per_page=100", pages=True):
+            if (item.get(field) or "") >= cutoff:
+                changed.append(item["html_url"])
+    if changed:
+        raise ValueError("Review discussion before sending: " + " ".join(dict.fromkeys(changed)))
+
+
+def matches(d, item):
+    if item.get("body") != d["body"] or item.get("user", {}).get("login", "").lower() != d["login"].lower():
+        return False
+    target = d["target"]
+    if "path" in target:
+        return (not item.get("in_reply_to_id") and item.get("original_commit_id") == d["head"]
+                and item.get("original_line") == target["line"]
+                and all(item.get(k) == target[k] for k in ("path", "side")))
+    return all(item.get(k) == v for k, v in target.items())
+
+
+def send(db, key):
+    d = load(db, key)
+    if d["status"] == "sent":
+        return {"url": d["url"]}
+    if d["status"] == "superseded":
+        raise ValueError("This revision was superseded")
+    host, owner, repo, _, number = d["pr"][8:].split("/")
+    base = f"repos/{owner}/{repo}"
+    pull, issue = f"{base}/pulls/{number}", f"{base}/issues/{number}"
+    target = d["target"]
+    comments = (pull if target else issue) + "/comments"
+    url = None
+    if d["status"] == "draft":
+        refresh(d, host, pull, issue)
+        if api(host, "user")["login"].lower() != d["login"].lower():
+            raise ValueError("The active account differs from the intended author")
+        endpoint = comments
+        payload = {"body": d["body"]}
+        if "path" in target:
+            payload.update(target, commit_id=d["head"])
+        elif "in_reply_to_id" in target:
+            endpoint += f'/{target["in_reply_to_id"]}/replies'
+        # Persist the attempt before the network write, including across process crashes.
+        d.update(status="pending", attempted=utc(time.time()))
+        save(db, key, d)
+        db.commit()
+        try:
+            item = api(host, endpoint, body=payload)
+            if matches(d, item):
+                url = item.get("html_url")
+        except RejectedPost:
+            d.update(status="draft")
+            save(db, key, d)
+            db.commit()
+            raise
+        except (ValueError, OSError, subprocess.TimeoutExpired) as error:
+            print(error, file=sys.stderr)
+    if not url:
+        candidates = [i["html_url"] for i in api(host, comments + "?per_page=100", pages=True)
+                      if i["created_at"] >= d["attempted"] and matches(d, i)]
+        if len(candidates) != 1:
+            raise ValueError("Cannot confirm publication. This revision will only retry the lookup.")
+        url = candidates[0]
+    d.update(status="sent", url=url)
+    save(db, key, d)
+    return {"url": url}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--store", type=Path, default=Path(".tmp/my-words.sqlite3"))
+    cmds = parser.add_subparsers(dest="command", required=True)
+    new = cmds.add_parser("draft", help="save the text and return its revision ID")
+    new.add_argument("--replaces", metavar="ID")
+    new.add_argument("--pr", metavar="PR_URL")
+    new.add_argument("--login", metavar="EXPECTED_AUTHOR")
+    new.add_argument("--head", metavar="REVIEWED_SHA")
+    for flag in ("--head-checked", "--discussion-checked"):
+        new.add_argument(flag, type=int, metavar="UNIX_SECONDS")
+    target = new.add_mutually_exclusive_group()
+    target.add_argument("--inline", nargs=3, metavar=("PATH", "SIDE", "LINE"))
+    target.add_argument("--reply", type=int, metavar="ROOT_COMMENT_ID")
+    target.add_argument("--top-level", action="store_true")
+    new.add_argument("--body-file", required=True, help="UTF-8 text, or - for stdin")
+    cmds.add_parser("send", help="publish an approved revision").add_argument("id")
+    args = parser.parse_args()
+    os.umask(0o077)
+    args.store.parent.mkdir(parents=True, exist_ok=True)
+    with sqlite3.connect(args.store) as db:
+        db.execute("CREATE TABLE IF NOT EXISTS drafts (id TEXT PRIMARY KEY, data TEXT NOT NULL)")
+        db.execute("BEGIN IMMEDIATE")
+        result = draft(db, args) if args.command == "draft" else send(db, args.id)
+    print(json.dumps(result, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (ValueError, OSError, sqlite3.Error, subprocess.TimeoutExpired) as exc:
+        sys.exit(str(exc))

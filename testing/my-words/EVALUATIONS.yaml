@@ -4,7 +4,7 @@ scenarios:
     user_message: |
       Walk me through posting our findings on example/shop#8. Simulate each turn
       and GitHub call with these fixtures. Label each action with the reply that
-      triggered it. The head is a1. Aaron uses the account aaronfc. Findings:
+      triggered it. The review checked head a1, the diff lines, and discussion one minute ago. Aaron uses the account aaronfc. Findings:
       a retry sends a second refund before checking the saved payment ID
       (P1, refund.py:12, code trace),
       zero days expires now (P2, expiry.py:24 RIGHT, reproduced), and a missing
@@ -17,9 +17,9 @@ scenarios:
     must_include:
       - 'I tried zero days and it expired immediately\. Can we document that\?'
     rubric:
-      - Checks the checkout, head, diff and discussion. Shows only the refund finding first with a precise code link, a short consequence and a collegial draft grounded in the trace, without claiming a test.
+      - Reuses the review evidence without a new inspection. Shows only the refund finding first with a precise code link, a short consequence and a collegial draft grounded in the trace, without claiming a test.
       - Answers why and treats technical agreement as discussion. Shows expiry only after deferral, previews the docs edit without posting, and waits for the send instruction.
-      - Rechecks before the single simulated inline write through gh, on expiry.py RIGHT line 24 at a1 in Aaron's name, with this exact body — "I tried zero days and it expired immediately. Can we document that?"
+      - Saves the exact edit as a replacement revision. Checks the account and uses the fresh evidence for the single simulated inline write through gh, on expiry.py RIGHT line 24 at a1 in Aaron's name, with this exact body — "I tried zero days and it expired immediately. Can we document that?"
       - Looks up the timed-out write, returns /r/42 without a second write, and accounts for the deferred refund and skipped label.
 
   - id: combined_comment
@@ -33,14 +33,13 @@ scenarios:
     rubric:
       - Honors the chosen order, explains why an inline comment does not fit, and gets one decision per item.
       - Both inclusion turns only add to the queue. Between the second inclusion and the final send instruction, shows the combined preview and revises it to ask for a rollback example.
-      - On final approval checks the current PR and sends one top-level PR comment with both items and the approved edit. Verifies and returns /p/22.
+      - On final approval sends one top-level PR comment with both items and the approved edit. Verifies and returns /p/22.
 
   - id: stale_and_covered
     user_message: |
       Simulate /aa:my-words on example/shop#10. The head fixes finding A.
       An existing thread /r/5 already reports finding B. For finding C, Aaron
-      approved "Can we reject empty input here?" on parse.py:10. Just before
-      posting, a new head rejects empty input but still accepts whitespace,
+      approved "Can we reject empty input here?" on parse.py:10. Six minutes after the checks, a new head rejects empty input but still accepts whitespace,
       at parse.py:14. When shown the update he says "I'll post that myself."
     rubric:
       - Drops A and links /r/5 for B without duplicating either.
@@ -60,4 +59,4 @@ scenarios:
     rubric:
       - Checks the thread and pushed commit, then drafts a reply explaining the fix with a link to b2.
       - Treats agreement as discussion, previews the edit, and waits for the send instruction.
-      - Rechecks and posts the approved wording once as a reply in /r/7, then verifies the reply and returns its permalink.
+      - Posts the approved revision once as a reply in /r/7, then verifies the reply and returns its permalink.
