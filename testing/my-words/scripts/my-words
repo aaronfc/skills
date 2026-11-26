@@ -91,6 +91,16 @@ def draft(db, args):
     return dict(id=key, pr=data["pr"], target=data["target"], body=data["body"])
 
 
+def discard(db, key):
+    data = load(db, key)
+    if data["status"] == "draft":
+        data["status"] = "discarded"
+        save(db, key, data)
+    elif data["status"] != "discarded":
+        raise ValueError(f'Cannot discard a {data["status"]} revision')
+    return {"id": key, "status": "discarded"}
+
+
 def utc(seconds):
     return dt.datetime.fromtimestamp(int(seconds), dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -130,8 +140,8 @@ def send(db, key):
     d = load(db, key)
     if d["status"] == "sent":
         return {"url": d["url"]}
-    if d["status"] == "superseded":
-        raise ValueError("This revision was superseded")
+    if d["status"] in ("superseded", "discarded"):
+        raise ValueError(f'This revision was {d["status"]}')
     host, owner, repo, _, number = d["pr"][8:].split("/")
     base = f"repos/{owner}/{repo}"
     pull, issue = f"{base}/pulls/{number}", f"{base}/issues/{number}"
@@ -191,13 +201,19 @@ def main():
     target.add_argument("--top-level", action="store_true")
     new.add_argument("--body-file", required=True, help="UTF-8 text, or - for stdin")
     cmds.add_parser("send", help="publish an approved revision").add_argument("id")
+    cmds.add_parser("discard", help="discard an unsent revision locally").add_argument("id")
     args = parser.parse_args()
     os.umask(0o077)
     args.store.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(args.store) as db:
         db.execute("CREATE TABLE IF NOT EXISTS drafts (id TEXT PRIMARY KEY, data TEXT NOT NULL)")
         db.execute("BEGIN IMMEDIATE")
-        result = draft(db, args) if args.command == "draft" else send(db, args.id)
+        if args.command == "draft":
+            result = draft(db, args)
+        elif args.command == "discard":
+            result = discard(db, args.id)
+        else:
+            result = send(db, args.id)
     print(json.dumps(result, ensure_ascii=False))
 
 

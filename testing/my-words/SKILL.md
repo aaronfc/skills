@@ -22,7 +22,7 @@ my-words send "$approved_revision_id"
 
 Use the expected account for this host. Supply actual Unix timestamps for when the remote head and discussion were checked. Omit unknown times. Use `--reply ROOT_COMMENT_ID` for a thread. If a finding has no suitable diff line, offer to include it in a combined `--top-level` comment. “Include it” saves the item for the combined preview after all findings have a decision.
 
-Discuss, skip, or defer without sending. For wording edits, replace the current revision locally and show its full text. Check evidence for a changed claim. “Send it” approves the latest preview. “Send it with these changes” also approves the specified edit. Agreement with a finding or fix does not authorize posting.
+When the user skips a finding or discards its saved draft, run `my-words discard "$draft_id"` for the current revision. Keep deferred drafts available for later. For wording edits, replace the current revision locally and show its full text. Check evidence for a changed claim. “Send it” approves the latest preview. “Send it with these changes” also approves the specified edit. Agreement with a finding or fix does not authorize posting.
 
 On approval, call `send` with the saved revision. It reuses each check for five minutes, checks the posting account and returns the verified permalink. If it reports changed evidence, assess that change. Use `draft --replaces` with the updated evidence and actual check time. Proceed under the existing approval only if the text, claim and destination still hold. Otherwise show the revised preview for approval.
 

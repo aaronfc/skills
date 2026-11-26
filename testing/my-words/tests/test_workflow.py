@@ -75,6 +75,19 @@ class Workflow(unittest.TestCase):
     def edit(self, key):
         return self.invoke("draft", "--replaces", key, "--body-file", str(self.body))["id"]
 
+    def test_discard_current_revision(self):
+        first = self.draft("--top-level")
+        current = self.edit(first)
+        with self.assertRaisesRegex(ValueError, "superseded"):
+            self.invoke("discard", first)
+        for _ in range(2):
+            self.assertEqual(self.invoke("discard", current), {"id": current, "status": "discarded"})
+        with self.assertRaisesRegex(ValueError, "discarded"):
+            self.invoke("send", current)
+        with self.assertRaisesRegex(ValueError, "current revision"):
+            self.edit(current)
+        self.assertEqual(self.calls, [])
+
     def test_edit_and_immediate_publish(self):
         first = self.draft("--inline", "some file", "LEFT", "9")
         self.body.write_bytes(b"Use `x`.\r\n")
@@ -82,6 +95,8 @@ class Workflow(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "superseded"):
             self.invoke("send", first)
         sent = self.invoke("send", edited)
+        with self.assertRaisesRegex(ValueError, "sent"):
+            self.invoke("discard", edited)
         self.assertEqual(sent, self.invoke("send", edited))
         self.assertEqual(self.calls, ["user", "pulls/12/comments"])
         self.assertEqual(self.payload, dict(path="some file", line=9, side="LEFT",
@@ -116,6 +131,8 @@ class Workflow(unittest.TestCase):
         self.failure = "connection reset"
         with self.assertRaisesRegex(ValueError, "Cannot confirm"):
             self.invoke("send", key)
+        with self.assertRaisesRegex(ValueError, "pending"):
+            self.invoke("discard", key)
         self.activity["pulls/12/comments"] = [dict(self.comment, in_reply_to_id=9), self.comment]
         self.assertEqual(self.invoke("send", key)["url"], PR + "#comment")
         self.assertEqual(self.calls.count("pulls/12/comments/8/replies"), 1)
